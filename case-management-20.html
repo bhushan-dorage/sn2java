@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>iQube — Case Management</title>
+<link rel="stylesheet" href="https://unpkg.com/@knadh/oat/oat.min.css"/>
+<script src="https://unpkg.com/@knadh/oat/oat.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --brand:       #DB0011;
+  --brand-dark:  #a80010;
+  --brand-light: #fdf0f1;
+  --brand-mid:   #c4000f;
+  --accent:      #DB0011;
+  --accent-soft: #fdf0f1;
+  --success:     #1a7a4a;
+  --warn:        #b45300;
+  --danger:      #a80010;
+  --hsbc-red:    #DB0011;
+  --neutral:     #767676;
+  --surface:     #f5f5f5;
+  --card:        #ffffff;
+  --border:      #e0e0e0;
+  --border-dark: #cccccc;
+  --text:        #333333;
+  --text-muted:  #666666;
+  --text-light:  #999999;
+  --header-h:    52px;
+  --sidebar-w:   200px;
+  --radius:      2px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);font-size:13.5px;min-height:100vh}
+
+/* ══ HEADER ══ */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--header-h);background:#fff;display:flex;align-items:center;padding:0 20px;gap:16px;box-shadow:none;border-bottom:3px solid var(--hsbc-red)}
+.hdr-hamburger{background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 6px;border-radius:3px;line-height:1;flex-shrink:0}
+.hdr-hamburger:hover{background:#f0f0f0}
+.hdr-logo{color:var(--text);font-weight:700;font-size:15px;letter-spacing:.3px;display:flex;align-items:center;gap:12px;white-space:nowrap;cursor:pointer}
+.hdr-sep{width:1px;height:26px;background:#e0e0e0}
+.hdr-iqube{font-size:14px;font-weight:700;color:var(--brand);letter-spacing:.5px}
+.hdr-module{color:var(--text-muted);font-size:12.5px}
+.hdr-search{margin-left:auto;background:#f5f5f5;border:1px solid var(--border);border-radius:var(--radius);color:var(--text);padding:6px 14px;font-size:13px;width:240px;outline:none;font-family:inherit}
+.hdr-search:focus{border-color:var(--brand);background:#fff}
+.hdr-search::placeholder{color:#aaa}
+.hdr-notif{position:relative;cursor:pointer}
+.hdr-notif-icon{width:34px;height:34px;border-radius:50%;background:#f5f5f5;display:grid;place-items:center;color:var(--text);font-size:15px;border:1px solid var(--border)}
+.hdr-notif-dot{position:absolute;top:3px;right:3px;width:8px;height:8px;background:var(--brand);border-radius:50%;border:2px solid #fff}
+.hdr-avatar{width:34px;height:34px;border-radius:50%;background:var(--brand);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0}
+
+/* ══ LAYOUT ══ */
+.layout{display:flex;padding-top:var(--header-h);min-height:100vh}
+
+/* ══ SIDEBAR COLLAPSED ══ */
+.sidebar.collapsed{width:0;overflow:hidden;padding:0;border:none}
+.main.sidebar-collapsed{margin-left:0}
+
+/* ══ SIDEBAR ══ */
+.sidebar{
+  width:var(--sidebar-w);
+  background:#fff;
+  border-right:1px solid var(--border);
+  flex-shrink:0;
+  position:fixed;
+  top:var(--header-h);
+  left:0;
+  bottom:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:8px 0;
+  z-index:100;
+  transition:width .2s ease;
+}
+.sb-section{padding:12px 12px 2px}
+.sb-label{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;padding:0 4px}
+.sb-nav{list-style:none;margin-top:4px}
+.sb-nav li a{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;color:var(--text-muted);text-decoration:none;font-size:13px;border-left:3px solid transparent;transition:all .12s;border-radius:0 2px 2px 0}
+.sb-nav li a:hover{color:var(--brand);background:var(--brand-light)}
+.sb-nav li a.active{color:var(--brand);background:var(--brand-light);border-left-color:var(--brand);font-weight:600}
+.sb-nav .ni{display:flex;align-items:center;gap:8px}
+.sb-nav .badge{background:#f0f0f0;color:var(--text-muted);font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-nav .badge.red{background:#fdf0f1;color:var(--brand)}
+
+/* ══ MAIN ══ */
+.main{flex:1;overflow-x:hidden;margin-left:var(--sidebar-w);transition:margin-left .2s ease}
+.view{display:none}
+.view.active{display:block}
+
+/* ══ PAGE TITLE BAR ══ */
+.page-bar{background:#fff;border-bottom:1px solid var(--border);padding:12px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.page-bar h2{font-size:15px;font-weight:700;color:var(--text)}
+.page-bar .cnt{background:#f0f0f0;color:var(--text-muted);font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.spacer{flex:1}
+.toolbar-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.toolbar-row select,.toolbar-row input{font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;color:var(--text)}
+.toolbar-row select:focus,.toolbar-row input:focus{border-color:var(--brand);outline:none}
+.toolbar-row input{width:185px}
+.btn{font-family:inherit;font-size:12.5px;padding:6px 16px;border-radius:var(--radius);cursor:pointer;font-weight:600;border:none;transition:all .12s;letter-spacing:.2px}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:#fff;color:var(--text);border:1px solid var(--border-dark)}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-success{background:#1a7a4a;color:#fff}
+.btn-success:hover{background:#155f39}
+.btn-warn{background:var(--warn);color:#fff}
+
+/* ══ FILTER BAR ══ */
+.filter-bar{background:#fafafa;border-bottom:1px solid var(--border);padding:6px 22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--border);border-radius:2px;padding:3px 8px;font-size:11.5px;color:var(--text-muted)}
+.chip strong{color:var(--text)}
+.chip-x{background:none;border:none;cursor:pointer;color:#aaa;font-size:14px;line-height:1;padding:0}
+.chip-x:hover{color:var(--brand)}
+
+/* ══ TABLE ══ */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:#fff;font-size:13px}
+thead th{background:#fafafa;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none}
+thead th:hover{background:#f0f0f0;color:var(--brand)}
+thead th.sorted{color:var(--brand)}
+thead th:first-child{width:36px;text-align:center}
+tbody tr{border-bottom:1px solid #f0f0f0;cursor:pointer;transition:background .1s}
+tbody tr:hover{background:#fff8f8}
+tbody tr.sel{background:#fdf0f1}
+tbody td{padding:9px 14px;vertical-align:middle}
+tbody td:first-child{text-align:center}
+
+/* ══ BADGES ══ */
+.case-num{color:var(--brand);font-weight:600;font-size:12.5px;font-family:'IBM Plex Mono',monospace;text-decoration:none}
+.case-num:hover{text-decoration:underline}
+.prio{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:2px;text-transform:uppercase;letter-spacing:.3px}
+.p-critical{background:#fdf0f1;color:#a80010}
+.p-high{background:#fff5e6;color:#b45300}
+.p-medium{background:#eaf5ee;color:#1a7a4a}
+.p-low{background:#f5f5f5;color:#767676}
+.st{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:2px}
+.st-new{background:#e8f0fe;color:#1a56db}
+.st-open{background:#e8f0fe;color:#1a56db}
+.st-progress{background:#fff8e6;color:#b45300}
+.st-pending{background:#f3f0ff;color:#5b21b6}
+.st-resolved{background:#eaf5ee;color:#166534}
+.st-closed{background:#f5f5f5;color:#767676}
+.ct{background:#f5f5f5;color:var(--text-muted);font-size:11px;padding:2px 7px;border-radius:2px;font-weight:500}
+.short-desc{max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt{color:var(--text-light);font-size:12px;white-space:nowrap}
+
+/* ══ PAGINATION ══ */
+.list-footer{background:#fff;border-top:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;justify-content:space-between}
+.pg{display:flex;gap:4px}
+.pg button{border:1px solid var(--border);background:#fff;padding:4px 9px;border-radius:2px;font-size:12px;cursor:pointer;color:var(--text-muted);font-family:inherit}
+.pg button:hover{border-color:var(--brand);color:var(--brand)}
+.pg button.cur{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ══ BREADCRUMB ══ */
+.bc{padding:7px 22px;font-size:12px;background:#fafafa;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;color:var(--text-light)}
+.bc a{color:var(--brand);text-decoration:none}
+.bc a:hover{text-decoration:underline}
+.bc-sep{color:#ccc}
+
+/* ══ DETAIL HEADER ══ */
+.det-hdr{background:#fff;border-bottom:1px solid var(--border);padding:12px 22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.det-hdr h2{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--text)}
+
+/* ══ DETAIL TABS ══ */
+.det-tabs{display:flex;background:#fff;padding:0 22px;border-bottom:2px solid var(--border)}
+.det-tab{padding:10px 14px;font-size:13px;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;transition:all .12s;white-space:nowrap}
+.det-tab:hover{color:var(--brand)}
+.det-tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tc{display:none}
+.tc.active{display:block}
+
+/* ══ DETAIL BODY ══ */
+.det-body{display:grid;grid-template-columns:1fr 300px}
+.det-main{padding:20px}
+.det-panel{background:#fafafa;border-left:1px solid var(--border);padding:16px}
+
+/* ══ FORM SECTION ══ */
+.fsec{background:#fff;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden}
+.fsec-hdr{background:#fafafa;padding:8px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fgrid{display:grid;grid-template-columns:1fr 1fr}
+.ff{padding:10px 16px;border-bottom:1px solid #f5f5f5;border-right:1px solid #f5f5f5}
+.ff:nth-child(2n){border-right:none}
+.ff.fw{grid-column:1/-1;border-right:none}
+.ff label{display:block;font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ff .val{font-size:13.5px;color:var(--text);line-height:1.5}
+.ff .mono{font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+.ff input,.ff select,.ff textarea{width:100%;font-family:inherit;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);padding:5px 9px;color:var(--text);background:#fff}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--brand);outline:none}
+.ff textarea{resize:vertical;min-height:80px}
+
+/* ══ ACTIVITY ══ */
+.act-sec{background:#fff;border:1px solid var(--border);border-radius:var(--radius)}
+.act-entry{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid #f5f5f5}
+.act-entry:last-child{border-bottom:none}
+.act-av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px;color:#fff}
+.act-body{flex:1}
+.act-meta{display:flex;align-items:baseline;gap:8px;margin-bottom:3px}
+.act-who{font-weight:700;font-size:12.5px}
+.act-action{font-size:12px;color:var(--text-muted)}
+.act-when{font-size:11px;color:var(--text-light);margin-left:auto}
+.act-text{font-size:13px;line-height:1.5;color:var(--text)}
+.act-change{font-size:11.5px;color:var(--text-muted);background:#f9f9f9;padding:4px 8px;border-radius:2px;margin-top:4px;display:inline-block;border-left:3px solid var(--border)}
+.act-from{text-decoration:line-through;color:#999}
+.act-to{color:var(--success);font-weight:600}
+.cmt-box{padding:12px 16px;border-top:2px solid var(--border);background:#fafafa}
+.cmt-box textarea{width:100%;border:1px solid var(--border);border-radius:2px;padding:8px;font-family:inherit;font-size:13px;resize:none;height:68px}
+.cmt-box textarea:focus{border-color:var(--brand);outline:none}
+.cmt-foot{display:flex;justify-content:flex-end;margin-top:8px;gap:8px}
+
+/* ══ SIDE PANEL ══ */
+.ps{margin-bottom:18px}
+.ps-title{font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.pkv{display:flex;flex-direction:column;gap:7px}
+.pkv-r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pkv-r .k{font-size:11.5px;color:var(--text-muted);flex-shrink:0}
+.pkv-r .v{font-size:12.5px;color:var(--text);text-align:right}
+.sla-wrap{margin-top:4px}
+.sla-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.sla-bar{height:5px;background:#e5e5e5;border-radius:2px;overflow:hidden}
+.sla-fill{height:100%;border-radius:2px;background:var(--warn)}
+.sla-fill.ok{background:var(--success)}
+.sla-fill.crit{background:var(--brand)}
+
+/* ══ TASKS ══ */
+.task-row{display:grid;grid-template-columns:34px 1fr auto;align-items:start;padding:11px 16px;border-bottom:1px solid #f5f5f5;gap:11px;transition:background .1s}
+.task-row:hover{background:#fafafa}
+.task-row:last-child{border-bottom:none}
+.tchk{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);cursor:pointer;display:grid;place-items:center;background:#fff;flex-shrink:0;transition:all .12s;margin-top:2px}
+.tchk:hover{border-color:var(--success);background:#f0faf4}
+.tchk.ip{border-color:var(--warn)}
+.tchk.ip::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--warn);display:block}
+.tchk.done{border-color:var(--success);background:var(--success)}
+.tchk.done::after{content:"✓";color:#fff;font-size:10px;font-weight:700}
+.t-title{font-size:13.5px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.t-title.done-txt{text-decoration:line-through;color:var(--text-muted);font-weight:400}
+.t-meta{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:4px}
+.t-mi{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted)}
+.t-mi .lbl{font-weight:600;color:var(--text)}
+.t-desc{font-size:12.5px;color:var(--text-muted);line-height:1.5}
+.t-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:96px}
+.t-due{font-size:11px;white-space:nowrap}
+.t-due.ov{color:var(--brand);font-weight:700}
+.t-due.td{color:var(--warn);font-weight:600}
+.t-due.ok{color:var(--text-muted)}
+.tp{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:2px;text-transform:uppercase;letter-spacing:.3px}
+.tp-investigate{background:#e8f0fe;color:#1a56db}
+.tp-remediate{background:#fff5e6;color:#b45300}
+.tp-communicate{background:#f3f0ff;color:#5b21b6}
+.tp-verify{background:#eaf5ee;color:#166534}
+.tp-escalate{background:#fdf0f1;color:#a80010}
+.tp-document{background:#f5f5f5;color:#555}
+.tp-review{background:#eaf5ee;color:#166534}
+.tp-action{background:#fff8e6;color:#b45300}
+
+.hist-row{display:grid;grid-template-columns:34px 1fr auto;align-items:start;padding:11px 16px;border-bottom:1px solid #f5f5f5;gap:11px;opacity:.8}
+.hist-row:last-child{border-bottom:none}
+.hist-icon{width:26px;height:26px;border-radius:50%;background:#eaf5ee;display:grid;place-items:center;font-size:13px;flex-shrink:0;margin-top:2px}
+.hist-title{font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:4px}
+.hist-meta{font-size:11.5px;color:var(--text-light);display:flex;flex-wrap:wrap;gap:8px}
+.hist-r{text-align:right;min-width:86px}
+.hist-when{font-size:11.5px;color:var(--text-muted)}
+.hist-dur{font-size:10.5px;color:var(--text-light);margin-top:2px}
+
+/* ══ MODAL ══ */
+.mbk{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;place-items:center}
+.mbk.open{display:grid}
+.mbox{background:#fff;border-radius:var(--radius);width:520px;max-width:96vw;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
+.mhdr{background:var(--brand);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.mhdr h3{font-size:14px;font-weight:700;letter-spacing:.2px}
+.mhdr button{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:20px;line-height:1}
+.mhdr button:hover{color:#fff}
+.mbody{padding:18px}
+.mf{margin-bottom:13px}
+.mf label{display:block;font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.mf input,.mf select,.mf textarea{width:100%;font-family:inherit;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;color:var(--text)}
+.mf input:focus,.mf select:focus,.mf textarea:focus{border-color:var(--brand);outline:none}
+.mf textarea{resize:vertical;height:68px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mftr{padding:12px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#fafafa}
+
+/* ══ DASHBOARD ══ */
+.dash-wrap{padding:22px}
+.dash-greeting{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.dash-greeting h2{font-size:20px;font-weight:700;color:var(--text)}
+.dash-greeting p{font-size:13px;color:var(--text-muted);margin-top:4px}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden;transition:box-shadow .15s;border-top:3px solid var(--border)}
+.kpi-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.kpi-card.c-red{border-top-color:var(--brand)}
+.kpi-card.c-warn{border-top-color:var(--warn)}
+.kpi-card.c-danger{border-top-color:#a80010}
+.kpi-card.c-success{border-top-color:var(--success)}
+.kpi-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.kpi-val{font-size:34px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1}
+.kpi-sub{font-size:11.5px;color:var(--text-muted);margin-top:8px;display:flex;align-items:center;gap:5px}
+.kpi-delta{font-size:11px;font-weight:700;padding:1px 6px;border-radius:2px}
+.kpi-delta.up{background:#eaf5ee;color:#166534}
+.kpi-delta.dn{background:#fdf0f1;color:#a80010}
+.kpi-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:28px;opacity:.07}
+
+.dash-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:22px}
+.dash-col{display:flex;flex-direction:column;gap:16px}
+
+.dash-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.dash-card-hdr{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafafa}
+.dash-card-hdr h3{font-size:12.5px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.4px}
+.dash-card-hdr a{font-size:12px;color:var(--brand);text-decoration:none;font-weight:600}
+.dash-card-hdr a:hover{text-decoration:underline}
+
+/* Mini bar chart */
+.bar-chart{padding:14px 16px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-row:last-child{margin-bottom:0}
+.bar-lbl{font-size:12px;color:var(--text-muted);width:80px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;background:#f5f5f5;border-radius:2px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.bar-val{font-size:12px;font-weight:700;color:var(--text);width:28px;text-align:right}
+
+/* Trend sparkline */
+.sparkline-wrap{padding:12px 16px 4px}
+.spark-labels{display:flex;justify-content:space-between;padding:0 16px 10px;font-size:10.5px;color:var(--text-light)}
+svg.spark{width:100%;height:60px;display:block}
+
+/* Recent cases table in dash */
+.dash-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.dash-table thead th{background:#fafafa;padding:7px 12px;text-align:left;font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.dash-table tbody tr{border-bottom:1px solid #f5f5f5;cursor:pointer}
+.dash-table tbody tr:hover{background:#fff8f8}
+.dash-table tbody td{padding:8px 12px;vertical-align:middle}
+
+/* Team workload */
+.wl-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid #f5f5f5}
+.wl-row:last-child{border-bottom:none}
+.wl-av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.wl-name{font-size:12.5px;font-weight:500;flex:1}
+.wl-bars{display:flex;gap:3px;align-items:center}
+.wl-dot{width:10px;height:10px;border-radius:2px}
+
+/* SLA ring */
+.sla-ring-wrap{display:flex;align-items:center;justify-content:center;gap:24px;padding:18px}
+.ring-item{text-align:center}
+.ring-item svg{width:72px;height:72px}
+.ring-item .ring-lbl{font-size:11px;color:var(--text-muted);margin-top:4px;font-weight:600}
+
+/* ══ MY TASKS VIEW ══ */
+.my-tasks-wrap{padding:22px}
+.my-tasks-greeting{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.my-tasks-greeting h2{font-size:18px;font-weight:700}
+.my-tasks-greeting p{font-size:13px;color:var(--text-muted);margin-top:3px}
+
+.mt-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.mt-kpi{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;text-align:center}
+.mt-kpi-val{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.mt-kpi-lbl{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px;font-weight:700}
+
+.mt-board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.mt-col{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.mt-col-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--text);background:#fafafa}
+.mt-col-hdr .cnt-pill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.mt-task-card{padding:12px 14px;border-bottom:1px solid #f5f5f5;transition:background .1s;cursor:pointer}
+.mt-task-card:last-child{border-bottom:none}
+.mt-task-card:hover{background:#fff8f8}
+.mt-tc-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px;line-height:1.35}
+.mt-tc-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+.mt-tc-case{font-size:11px;color:var(--brand);font-family:'IBM Plex Mono',monospace;font-weight:600}
+.mt-tc-due{font-size:11px}
+.mt-tc-due.ov{color:var(--brand);font-weight:700}
+.mt-tc-due.td{color:var(--warn);font-weight:600}
+.mt-tc-due.ok{color:var(--text-muted)}
+
+/* History section */
+.hist-section{margin-top:22px}
+.hist-section-hdr{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.hist-section-hdr span{font-size:12px;color:var(--text-muted);font-weight:400}
+
+.hist-timeline{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ht-entry{display:flex;gap:14px;padding:11px 16px;border-bottom:1px solid #f5f5f5;position:relative}
+.ht-entry:last-child{border-bottom:none}
+.ht-dot{width:10px;height:10px;border-radius:50%;background:var(--success);flex-shrink:0;margin-top:5px}
+.ht-body{flex:1}
+.ht-title{font-size:13px;font-weight:500;color:var(--text-muted)}
+.ht-meta{font-size:11.5px;color:var(--text-light);display:flex;gap:10px;margin-top:3px;flex-wrap:wrap}
+.ht-right{text-align:right;font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+.ht-right .ht-dur{font-size:10.5px;color:var(--text-light);margin-top:2px}
+
+/* info banner */
+.info-banner{background:#fff8e6;border:1px solid #f5d87a;color:#7a4d00;padding:8px 14px;border-radius:2px;font-size:12.5px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+
+/* ══ COLLAPSIBLE FILTER PANEL ══ */
+.filter-panel{background:#fafafa;border-bottom:1px solid var(--border);padding:0 22px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease}
+.filter-panel.open{max-height:160px;padding:12px 22px}
+.filter-toggle-btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--radius);cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text-muted);transition:all .12s}
+.filter-toggle-btn:hover{border-color:var(--brand);color:var(--brand)}
+.filter-toggle-btn.has-filters{border-color:var(--brand);color:var(--brand);background:var(--brand-light)}
+.filter-active-cnt{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px;font-weight:700;line-height:1}
+
+/* ══ KPI CARDS — clickable navigation ══ */
+.kpi-card.clickable{cursor:pointer;transition:all .15s}
+.kpi-card.clickable:hover{box-shadow:0 6px 24px rgba(219,0,17,.13);transform:translateY(-2px)}
+.kpi-card.clickable:hover .kpi-val{color:var(--brand)}
+.kpi-card.clickable:hover .kpi-label{color:var(--brand)}
+
+@media(max-width:900px){
+  .det-body,.dash-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .mt-board{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <button class="hdr-hamburger" onclick="toggleSidebar()" title="Toggle menu">☰</button>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/HSBC%27s_Logo.svg"
+         alt="HSBC" height="30"
+         style="display:block"/>
+    <div class="hdr-sep"></div>
+    <span class="hdr-iqube">iQube</span>
+  </div>
+  <div class="hdr-sep"></div>
+  <span class="hdr-module" id="hdr-module-name">iQube — Dashboard</span>
+  <input type="search" class="hdr-search" placeholder="Search iQube cases, tasks…"/>
+  <div class="hdr-notif"><div class="hdr-notif-icon">🔔</div><div class="hdr-notif-dot"></div></div>
+  <div class="hdr-avatar">BK</div>
+</header>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Overview</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('dashboard')" id="nav-dashboard" class="active"><span class="ni">📊 Dashboard</span></a></li>
+      <li><a href="#" onclick="showView('my-tasks')" id="nav-my-tasks"><span class="ni">✅ My Tasks</span> <span class="badge red" id="sb-mytask-cnt">7</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Cases</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('list')" id="nav-list"><span class="ni">📋 All Cases</span> <span class="badge">142</span></a></li>
+      <li><a href="#" onclick="showView('list')" id="nav-open"><span class="ni">🔵 Open</span> <span class="badge">58</span></a></li>
+      <li><a href="#" onclick="showView('list')" id="nav-mine"><span class="ni">👤 Assigned to Me</span> <span class="badge">12</span></a></li>
+      <li><a href="#" onclick="showView('list')" id="nav-breaching"><span class="ni">⚠️ SLA Breaching</span> <span class="badge red">4</span></a></li>
+      <li><a href="#" onclick="showView('list')" id="nav-resolved"><span class="ni">✅ Resolved Today</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Tasks</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('task-list')" id="nav-task-list"><span class="ni">📝 All Tasks</span> <span class="badge">38</span></a></li>
+      <li><a href="#" onclick="showView('task-list')" id="nav-tasks-open"><span class="ni">🔵 Open Tasks</span> <span class="badge">22</span></a></li>
+      <li><a href="#" onclick="showView('task-list')" id="nav-tasks-mine"><span class="ni">👤 My Tasks</span> <span class="badge red">7</span></a></li>
+      <li><a href="#" onclick="showView('task-list')" id="nav-tasks-overdue"><span class="ni">🔴 Overdue</span> <span class="badge red">2</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <ul class="sb-nav">
+      <li><a href="#"><span class="ni">🏷️ Categories</span></a></li>
+      <li><a href="#"><span class="ni">👥 Teams</span></a></li>
+      <li><a href="#"><span class="ni">⚙️ Workflows</span></a></li>
+      <li><a href="#"><span class="ni">📈 Reports</span></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ════════════════ DASHBOARD ════════════════ -->
+<div id="view-dashboard" class="view active">
+<div class="dash-wrap">
+
+  <div class="dash-greeting">
+    <h2>Good morning, Bhushan 👋</h2>
+    <p>Sunday, 15 March 2026 &nbsp;·&nbsp; Here's what needs your attention today in <strong>iQube</strong>.</p>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card c-red clickable" onclick="showView('list')" title="View all open cases">
+      <div class="kpi-icon">📂</div>
+      <div class="kpi-label">Total Open Cases</div>
+      <div class="kpi-val">58</div>
+      <div class="kpi-sub"><span class="kpi-delta dn">+3</span> since yesterday</div>
+    </div>
+    <div class="kpi-card c-danger clickable" onclick="showView('list')" title="View Critical & High priority cases">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-label">Critical / High Priority</div>
+      <div class="kpi-val">11</div>
+      <div class="kpi-sub"><span class="kpi-delta dn">+2</span> new today</div>
+    </div>
+    <div class="kpi-card c-warn clickable" onclick="showView('list')" title="View SLA breaching cases">
+      <div class="kpi-icon">⏱️</div>
+      <div class="kpi-label">SLA Breaching Soon</div>
+      <div class="kpi-val">4</div>
+      <div class="kpi-sub">Within next 2 hours</div>
+    </div>
+    <div class="kpi-card c-success clickable" onclick="showView('list')" title="View cases resolved today">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">Resolved Today</div>
+      <div class="kpi-val">17</div>
+      <div class="kpi-sub"><span class="kpi-delta up">+5</span> vs last week avg</div>
+    </div>
+  </div>
+
+  <div class="dash-row">
+    <!-- Left column -->
+    <div class="dash-col">
+
+      <!-- Recent Cases -->
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <h3>Recent Cases</h3>
+          <a href="#" onclick="showView('list')">View all →</a>
+        </div>
+        <table class="dash-table">
+          <thead><tr><th>Case #</th><th>Subject</th><th>Priority</th><th>State</th><th>Assigned To</th><th>Updated</th></tr></thead>
+          <tbody id="dash-recent-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Volume by day sparkline -->
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Case Volume — Last 7 Days</h3></div>
+        <div class="sparkline-wrap">
+          <svg class="spark" viewBox="0 0 400 60" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#DB0011" stop-opacity=".2"/>
+                <stop offset="100%" stop-color="#DB0011" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <polygon points="0,48 57,38 114,42 171,22 228,30 285,10 342,18 400,6 400,60 0,60" fill="url(#sg)"/>
+            <polyline points="0,48 57,38 114,42 171,22 228,30 285,10 342,18 400,6" fill="none" stroke="#DB0011" stroke-width="2.5" stroke-linejoin="round"/>
+            <circle cx="400" cy="6" r="4" fill="#DB0011"/>
+          </svg>
+        </div>
+        <div class="spark-labels"><span>9 Mar</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15 Mar</span></div>
+      </div>
+
+      <!-- Case breakdown by category -->
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Open Cases by Category</h3></div>
+        <div class="bar-chart" id="cat-bars"></div>
+      </div>
+
+    </div>
+
+    <!-- Right column -->
+    <div class="dash-col">
+
+      <!-- SLA compliance rings -->
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>SLA Compliance (MTD)</h3></div>
+        <div class="sla-ring-wrap">
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#1a7a4a" stroke-width="8" stroke-dasharray="149 176" stroke-dashoffset="44" stroke-linecap="round"/>
+              <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#0f1c2e" font-family="IBM Plex Mono">85%</text>
+            </svg>
+            <div class="ring-val" style="display:none"></div>
+            <div class="ring-lbl">Response SLA</div>
+          </div>
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#c97b00" stroke-width="8" stroke-dasharray="123 176" stroke-dashoffset="44" stroke-linecap="round"/>
+              <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#0f1c2e" font-family="IBM Plex Mono">70%</text>
+            </svg>
+            <div class="ring-lbl">Resolution SLA</div>
+          </div>
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70">
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+              <circle cx="35" cy="35" r="28" fill="none" stroke="#1a7a4a" stroke-width="8" stroke-dasharray="158 176" stroke-dashoffset="44" stroke-linecap="round"/>
+              <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#0f1c2e" font-family="IBM Plex Mono">90%</text>
+            </svg>
+            <div class="ring-lbl">CSAT Target</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My open tasks summary -->
+      <div class="dash-card">
+        <div class="dash-card-hdr">
+          <h3>My Open Tasks</h3>
+          <a href="#" onclick="showView('my-tasks')">View all →</a>
+        </div>
+        <div id="dash-my-tasks-summary"></div>
+      </div>
+
+      <!-- Team workload -->
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Team Workload</h3></div>
+        <div id="team-workload"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════ MY TASKS ════════════════ -->
+<div id="view-my-tasks" class="view">
+<div class="bc">
+  <a href="#" onclick="showView('dashboard')">Dashboard</a>
+  <span class="bc-sep">›</span>
+  <span style="color:var(--text)">My Tasks</span>
+</div>
+<div class="my-tasks-wrap">
+
+  <div class="my-tasks-greeting">
+    <h2>My Tasks</h2>
+    <p>All tasks currently assigned to you across open cases. Today is <strong>15 Mar 2026</strong>.</p>
+  </div>
+
+  <!-- Mini KPIs -->
+  <div class="mt-kpi-row">
+    <div class="mt-kpi"><div class="mt-kpi-val" style="color:var(--accent)">7</div><div class="mt-kpi-lbl">Open</div></div>
+    <div class="mt-kpi"><div class="mt-kpi-val" style="color:var(--warn)">3</div><div class="mt-kpi-lbl">In Progress</div></div>
+    <div class="mt-kpi"><div class="mt-kpi-val" style="color:var(--danger)">2</div><div class="mt-kpi-lbl">Overdue</div></div>
+    <div class="mt-kpi"><div class="mt-kpi-val" style="color:var(--success)">24</div><div class="mt-kpi-lbl">Completed (30d)</div></div>
+  </div>
+
+  <!-- Kanban board -->
+  <div class="mt-board" id="mt-board"></div>
+
+  <!-- Historical Tasks -->
+  <div class="hist-section">
+    <div class="hist-section-hdr">
+      Task History
+      <span>Completed tasks assigned to you in the last 30 days</span>
+    </div>
+    <div class="hist-timeline" id="my-hist-timeline"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ════════════════ CASE LIST ════════════════ -->
+<div id="view-list" class="view">
+  <div class="bc">
+    <a href="#" onclick="showView('dashboard')">Dashboard</a>
+    <span class="bc-sep">›</span>
+    <span style="color:var(--text)">All Cases</span>
+  </div>
+  <div class="page-bar">
+    <h2>All Cases</h2>
+    <span class="cnt" id="list-cnt">142</span>
+    <div class="spacer"></div>
+    <div class="toolbar-row">
+      <input type="text" placeholder="🔍  Quick search…" oninput="filterCases(this.value)" style="width:200px"/>
+      <button class="filter-toggle-btn" id="case-filter-btn" onclick="toggleFilterPanel('case-filter-panel','case-filter-btn')">
+        ⚙ Filters <span class="filter-active-cnt" id="case-filter-cnt" style="display:none">0</span>
+      </button>
+      <button class="btn btn-primary" onclick="openNewCaseModal()">+ New Case</button>
+    </div>
+  </div>
+  <!-- Collapsible filter panel -->
+  <div class="filter-panel" id="case-filter-panel">
+    <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">State</label>
+        <select onchange="filterCases()" id="cf-status" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:110px">
+          <option value="">All States</option><option>New</option><option>In Progress</option>
+          <option>Pending</option><option>Resolved</option><option>Closed</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Priority</label>
+        <select onchange="filterCases()" id="cf-priority" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:110px">
+          <option value="">All Priorities</option><option>Critical</option><option>High</option>
+          <option>Medium</option><option>Low</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Type</label>
+        <select onchange="filterCases()" id="cf-type" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:130px">
+          <option value="">All Types</option><option>Service Request</option><option>Complaint</option>
+          <option>Inquiry</option><option>Incident</option><option>Change</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Assigned To</label>
+        <select onchange="filterCases()" id="cf-assignee" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:130px">
+          <option value="">All Assignees</option>
+          <option>Rahul Mehta</option><option>Sanjay Patel</option>
+          <option>Bhushan Kadam</option><option>Divya Thomas</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:transparent">.</label>
+        <button onclick="clearCaseFilters()" style="font-family:inherit;font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;color:var(--text-muted)">✕ Clear all</button>
+      </div>
+      <span style="margin-left:auto;font-size:11.5px;color:var(--text-muted);align-self:flex-end;padding-bottom:2px" id="filter-count-label">Showing 1–20 of 142</span>
+    </div>
+  </div>
+  <!-- Active filter chips -->
+  <div id="case-active-chips" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 22px;background:#fff;border-bottom:1px solid var(--border)"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox"/></th>
+          <th class="sorted">Case # <span style="margin-left:3px;opacity:.6;font-size:10px">▲</span></th>
+          <th>Type</th>
+          <th>Priority</th>
+          <th>State</th>
+          <th>Subject</th>
+          <th>Requester</th>
+          <th>Assigned To</th>
+          <th>Category</th>
+          <th>Created</th>
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody id="case-tbody"></tbody>
+    </table>
+  </div>
+  <div class="list-footer">
+    <span style="font-size:12px;color:var(--text-muted)" id="pg-label">Showing 1–20 of 142 records</span>
+    <div class="pg">
+      <button>‹ Prev</button>
+      <button class="cur">1</button><button>2</button><button>3</button><button>…</button><button>8</button>
+      <button>Next ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TASK LIST ════════════════ -->
+<div id="view-task-list" class="view">
+  <div class="bc">
+    <a href="#" onclick="showView('dashboard')">Dashboard</a>
+    <span class="bc-sep">›</span>
+    <span style="color:var(--text)">All Tasks</span>
+  </div>
+  <div class="page-bar">
+    <h2>All Tasks</h2>
+    <span class="cnt" id="task-list-cnt">38</span>
+    <div class="spacer"></div>
+    <div class="toolbar-row">
+      <input type="text" id="task-search-input" placeholder="🔍  Search tasks…" oninput="filterTasks(this.value)" style="width:200px"/>
+      <button class="filter-toggle-btn" id="task-filter-btn" onclick="toggleFilterPanel('task-filter-panel','task-filter-btn')">
+        ⚙ Filters <span class="filter-active-cnt" id="task-filter-cnt" style="display:none">0</span>
+      </button>
+      <button class="btn btn-primary" onclick="openTaskModal()">+ New Task</button>
+    </div>
+  </div>
+  <!-- Collapsible filter panel -->
+  <div class="filter-panel" id="task-filter-panel">
+    <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Status</label>
+        <select id="task-filter-status" onchange="filterTasks()" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:120px">
+          <option value="">All Statuses</option>
+          <option value="open">Open</option><option value="in-progress">In Progress</option><option value="done">Done</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Type</label>
+        <select id="task-filter-type" onchange="filterTasks()" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:130px">
+          <option value="">All Types</option>
+          <option value="investigate">Investigate</option><option value="remediate">Remediate</option>
+          <option value="communicate">Communicate</option><option value="verify">Verify</option>
+          <option value="escalate">Escalate</option><option value="document">Document</option>
+          <option value="review">Review</option><option value="action">Action Item</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Priority</label>
+        <select id="task-filter-priority" onchange="filterTasks()" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:110px">
+          <option value="">All Priorities</option>
+          <option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)">Assigned To</label>
+        <select id="task-filter-assignee" onchange="filterTasks()" style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;min-width:130px">
+          <option value="">All Assignees</option>
+          <option value="Bhushan Kadam">Bhushan Kadam</option>
+          <option value="Rahul Mehta">Rahul Mehta</option>
+          <option value="Priya Sharma">Priya Sharma</option>
+          <option value="Sanjay Patel">Sanjay Patel</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:transparent">.</label>
+        <button onclick="clearTaskFilters()" style="font-family:inherit;font-size:12px;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;cursor:pointer;color:var(--text-muted)">✕ Clear all</button>
+      </div>
+      <span style="margin-left:auto;font-size:11.5px;color:var(--text-muted);align-self:flex-end;padding-bottom:2px" id="task-list-count-label">Showing all tasks</span>
+    </div>
+  </div>
+  <!-- Active filter chips -->
+  <div id="task-active-chips" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 22px;background:#fff;border-bottom:1px solid var(--border)"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox"/></th>
+          <th class="sorted">Task ID <span style="margin-left:3px;opacity:.6;font-size:10px">▲</span></th>
+          <th>Type</th>
+          <th>Title</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Case #</th>
+          <th>Assigned To</th>
+          <th>Due Date</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="task-list-tbody"></tbody>
+    </table>
+  </div>
+  <div class="list-footer">
+    <span style="font-size:12px;color:var(--text-muted)" id="task-pg-label">Showing all tasks</span>
+    <div class="pg">
+      <button>‹ Prev</button>
+      <button class="cur">1</button><button>2</button><button>3</button>
+      <button>Next ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ CASE DETAIL ════════════════ -->
+<div id="view-detail" class="view">
+  <div class="bc">
+    <a href="#" onclick="showView('list')">Case Management</a>
+    <span class="bc-sep">›</span>
+    <a href="#" onclick="showView('list')">All Cases</a>
+    <span class="bc-sep">›</span>
+    <span id="det-bc-num" style="color:var(--text)">CASE-1042</span>
+  </div>
+  <div class="det-hdr">
+    <button class="btn btn-ghost" onclick="showView('list')">← Back</button>
+    <h2 id="det-num">CASE-1042</h2>
+    <span id="det-state-badge"></span>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost">Assign to Me</button>
+      <button class="btn btn-ghost">Put on Hold</button>
+      <button class="btn btn-ghost">Escalate</button>
+      <button class="btn btn-success">Resolve</button>
+    </div>
+  </div>
+  <div class="det-tabs">
+    <div class="det-tab active" onclick="switchTab(this,'tc-details')">Details</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-activity')">Activity</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-tasks')">Tasks <span id="det-task-badge" style="background:var(--brand);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:3px;vertical-align:middle;">3</span></div>
+    <div class="det-tab" onclick="switchTab(this,'tc-related')">Related</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-approvals')">Approvals</div>
+  </div>
+  <div class="det-body">
+    <div class="det-main">
+
+      <!-- Details tab -->
+      <div id="tc-details" class="tc active">
+        <div class="info-banner">ℹ️ Resolution SLA due in <strong>2h 14m</strong>. Breach imminent.</div>
+        <div class="fsec">
+          <div class="fsec-hdr">Case Information</div>
+          <div class="fgrid">
+            <div class="ff"><label>Case Number</label><div class="val mono" id="det-case-num">CASE-1042</div></div>
+            <div class="ff"><label>State</label><select><option>In Progress</option><option>New</option><option>Pending</option><option>Resolved</option><option>Closed</option></select></div>
+            <div class="ff"><label>Case Type</label><select><option>Service Request</option><option>Complaint</option><option selected>Incident</option><option>Inquiry</option><option>Change</option></select></div>
+            <div class="ff"><label>Priority</label><select><option selected>High</option><option>Critical</option><option>Medium</option><option>Low</option></select></div>
+            <div class="ff"><label>Impact</label><select><option selected>Medium</option><option>High</option><option>Low</option></select></div>
+            <div class="ff"><label>Urgency</label><select><option selected>High</option><option>Medium</option><option>Low</option></select></div>
+            <div class="ff"><label>Category</label><select><option selected>Network</option><option>Software</option><option>Hardware</option><option>Security</option></select></div>
+            <div class="ff"><label>Subcategory</label><select><option selected>Connectivity</option><option>VPN</option><option>DNS</option><option>Firewall</option></select></div>
+            <div class="ff fw"><label>Subject</label><input type="text" id="det-subject" value="VPN connectivity failure — Singapore office users unable to connect"/></div>
+            <div class="ff fw"><label>Description</label><textarea>Approximately 45 users in the Singapore office are unable to establish VPN connections since 09:15 SGT. Users receive error code 789. Suspected issue with VPN concentrator or upstream gateway.</textarea></div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-hdr">Assignment</div>
+          <div class="fgrid">
+            <div class="ff"><label>Assignment Group</label><select><option selected>Network Operations</option><option>Infra L2</option><option>Security Ops</option></select></div>
+            <div class="ff"><label>Assigned To</label><input type="text" value="Rahul Mehta"/></div>
+            <div class="ff"><label>Requester</label><input type="text" value="Priya Sharma"/></div>
+            <div class="ff"><label>Location</label><div class="val">Singapore — SG-HQ</div></div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-hdr">Resolution</div>
+          <div class="fgrid">
+            <div class="ff"><label>Resolution Code</label><select><option>— Select —</option><option>Solved (Permanently)</option><option>Solved (Work Around)</option><option>Not Solved</option></select></div>
+            <div class="ff"><label>Resolved By</label><input type="text" placeholder="Resolver name"/></div>
+            <div class="ff fw"><label>Resolution Notes</label><textarea placeholder="Document resolution steps taken…"></textarea></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-primary">Save</button>
+          <button class="btn btn-ghost">Update</button>
+        </div>
+      </div>
+
+      <!-- Activity tab -->
+      <div id="tc-activity" class="tc">
+        <div class="act-sec">
+          <div class="act-entry">
+            <div class="act-av" style="background:#1a7a4a">RM</div>
+            <div class="act-body">
+              <div class="act-meta"><span class="act-who">Rahul Mehta</span><span class="act-action">added work note</span><span class="act-when">14 Mar, 11:42</span></div>
+              <div class="act-text">Escalated to L2 Network Ops. Confirmed VPN concentrator SG-VPN-01 is showing high CPU at 98%. Initiated restart procedure per runbook NW-042.</div>
+            </div>
+          </div>
+          <div class="act-entry">
+            <div class="act-av" style="background:#c97b00">PS</div>
+            <div class="act-body">
+              <div class="act-meta"><span class="act-who">Priya Sharma</span><span class="act-action">updated fields</span><span class="act-when">14 Mar, 10:58</span></div>
+              <div class="act-change">State: <span class="act-from">New</span> → <span class="act-to">In Progress</span></div>
+              <div class="act-change" style="margin-top:4px">Assigned To: <span class="act-from">Unassigned</span> → <span class="act-to">Rahul Mehta</span></div>
+            </div>
+          </div>
+          <div class="act-entry">
+            <div class="act-av" style="background:#6b21a8">SB</div>
+            <div class="act-body">
+              <div class="act-meta"><span class="act-who">System Bot</span><span class="act-action">auto-routed to group</span><span class="act-when">14 Mar, 10:21</span></div>
+              <div class="act-change">Assignment Group: <span class="act-from">—</span> → <span class="act-to">Network Operations</span></div>
+            </div>
+          </div>
+          <div class="act-entry">
+            <div class="act-av" style="background:#1B3A5C">PS</div>
+            <div class="act-body">
+              <div class="act-meta"><span class="act-who">Priya Sharma</span><span class="act-action">created case</span><span class="act-when">14 Mar, 09:22</span></div>
+              <div class="act-text">Case raised on behalf of Singapore office. ~45 users affected. Business impact: High — trading operations disrupted.</div>
+            </div>
+          </div>
+          <div class="cmt-box">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Add Work Note</div>
+            <textarea placeholder="Type your note or comment…"></textarea>
+            <div class="cmt-foot">
+              <button class="btn btn-ghost">Cancel</button>
+              <button class="btn btn-primary">Post Note</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks tab -->
+      <div id="tc-tasks" class="tc">
+        <div class="fsec">
+          <div class="fsec-hdr">
+            Current Tasks <span style="background:var(--warn);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:6px;">3 Open</span>
+            <button class="btn btn-primary" style="font-size:11.5px;padding:3px 10px" onclick="openTaskModal()">+ Add Task</button>
+          </div>
+          <div id="det-current-tasks"></div>
+        </div>
+        <div class="fsec" style="margin-top:14px">
+          <div class="fsec-hdr">Task History <span style="background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:6px;">5 Completed</span></div>
+          <div id="det-hist-tasks"></div>
+        </div>
+      </div>
+
+      <!-- Related tab -->
+      <div id="tc-related" class="tc">
+        <div class="fsec"><div class="fsec-hdr">Related Cases</div>
+          <table><thead><tr><th>Case #</th><th>Subject</th><th>Type</th><th>State</th><th>Created</th></tr></thead>
+          <tbody>
+            <tr><td><span class="case-num">CASE-1038</span></td><td>Recurring network instability — SG region</td><td><span class="ct">Incident</span></td><td><span class="st st-progress">In Progress</span></td><td class="dt">10 Mar 2026</td></tr>
+          </tbody></table>
+        </div>
+        <div class="fsec" style="margin-top:14px"><div class="fsec-hdr">Linked Change Requests</div>
+          <table><thead><tr><th>Case #</th><th>Subject</th><th>State</th><th>Scheduled</th></tr></thead>
+          <tbody>
+            <tr><td><span class="case-num">CASE-CR-198</span></td><td>VPN concentrator firmware upgrade</td><td><span class="st st-pending">Pending Approval</span></td><td class="dt">15 Mar 2026</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+
+      <!-- Approvals tab -->
+      <div id="tc-approvals" class="tc">
+        <div class="fsec"><div class="fsec-hdr">Approval Records</div>
+          <table><thead><tr><th>Approver</th><th>Role</th><th>State</th><th>Due</th><th>Comments</th></tr></thead>
+          <tbody>
+            <tr><td>Ankit Bhatt</td><td>Change Manager</td><td><span class="st st-pending">Requested</span></td><td class="dt">15 Mar 2026</td><td>—</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Detail Side Panel -->
+    <div class="det-panel">
+      <div class="ps">
+        <div class="ps-title">SLA Status</div>
+        <div class="sla-wrap"><div class="sla-lbl"><span>Response SLA</span><span style="color:var(--success);font-weight:600">Met ✓</span></div><div class="sla-bar"><div class="sla-fill ok" style="width:100%"></div></div></div>
+        <div class="sla-wrap" style="margin-top:10px"><div class="sla-lbl"><span>Resolution SLA</span><span style="color:var(--warn);font-weight:600">2h 14m left</span></div><div class="sla-bar"><div class="sla-fill" style="width:72%"></div></div></div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Dates &amp; Times</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Opened</span><span class="v">14 Mar 2026, 09:22</span></div>
+          <div class="pkv-r"><span class="k">Last updated</span><span class="v">14 Mar 2026, 11:42</span></div>
+          <div class="pkv-r"><span class="k">Response due</span><span class="v" style="color:var(--success)">Completed</span></div>
+          <div class="pkv-r"><span class="k">Resolution due</span><span class="v" style="color:var(--warn)">14 Mar, 14:00</span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Configuration Item</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">CI</span><span class="v" style="color:var(--accent)">SG-VPN-01</span></div>
+          <div class="pkv-r"><span class="k">Type</span><span class="v">Network Device</span></div>
+          <div class="pkv-r"><span class="k">Environment</span><span class="v">Production</span></div>
+          <div class="pkv-r"><span class="k">Location</span><span class="v">Singapore DC</span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Contact</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Requester</span><span class="v">Priya Sharma</span></div>
+          <div class="pkv-r"><span class="k">Dept</span><span class="v">Trading Ops</span></div>
+          <div class="pkv-r"><span class="k">Phone</span><span class="v">+65 9182 xxxx</span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Watchers</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <div style="background:var(--brand);color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700" title="Priya Sharma">PS</div>
+          <div style="background:#1a7a4a;color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700" title="Rahul Mehta">RM</div>
+          <div style="background:#c97b00;color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700" title="Ankit Bhatt">AB</div>
+          <div style="background:#64748b;color:#fff;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;cursor:pointer" title="Add">+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- TASK MODAL -->
+<div class="mbk" id="task-modal">
+  <div class="mbox">
+    <div class="mhdr"><h3>Add Task</h3><button onclick="closeTaskModal()">×</button></div>
+    <div class="mbody">
+      <div class="mf"><label>Task Title *</label><input type="text" id="mt-title" placeholder="Brief description of the task"/></div>
+      <div class="mrow">
+        <div class="mf"><label>Type</label>
+          <select id="mt-type">
+            <option value="investigate">Investigate</option><option value="remediate">Remediate</option>
+            <option value="communicate">Communicate</option><option value="verify">Verify</option>
+            <option value="escalate">Escalate</option><option value="document">Document</option>
+            <option value="review">Review</option><option value="action">Action Item</option>
+          </select>
+        </div>
+        <div class="mf"><label>Priority</label>
+          <select id="mt-priority"><option>High</option><option selected>Medium</option><option>Low</option></select>
+        </div>
+      </div>
+      <div class="mrow">
+        <div class="mf"><label>Assigned To</label><input type="text" id="mt-assignee" placeholder="Name or group"/></div>
+        <div class="mf"><label>Due Date</label><input type="date" id="mt-due" value="2026-03-15"/></div>
+      </div>
+      <div class="mf"><label>Description</label><textarea id="mt-desc" placeholder="Steps, context, or acceptance criteria…"></textarea></div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CASE MODAL -->
+<div class="mbk" id="case-modal">
+  <div class="mbox">
+    <div class="mhdr"><h3>New Case — iQube</h3><button onclick="closeCaseModal()">×</button></div>
+    <div class="mbody">
+      <div class="mf"><label>Subject *</label><input type="text" id="nc-subject" placeholder="Brief summary of the case"/></div>
+      <div class="mrow">
+        <div class="mf"><label>Type</label>
+          <select id="nc-type"><option>Service Request</option><option>Complaint</option><option>Incident</option><option>Inquiry</option><option>Change</option></select>
+        </div>
+        <div class="mf"><label>Priority</label>
+          <select id="nc-priority"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+        </div>
+      </div>
+      <div class="mrow">
+        <div class="mf"><label>Category</label>
+          <select id="nc-category"><option>Network</option><option>Software</option><option>Hardware</option><option>Security</option><option>HR</option><option>Finance</option><option>Facilities</option></select>
+        </div>
+        <div class="mf"><label>Requester</label><input type="text" id="nc-requester" placeholder="Name of requester"/></div>
+      </div>
+      <div class="mf"><label>Description</label><textarea id="nc-desc" placeholder="Detailed description…"></textarea></div>
+    </div>
+    <div class="mftr">
+      <button class="btn btn-ghost" onclick="closeCaseModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="addCase()">Create Case</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const cases = [
+  {num:"CASE-1042",type:"Incident",  pri:"High",    state:"progress",subject:"VPN connectivity failure — Singapore office",       requester:"Priya Sharma",  assigned:"Rahul Mehta",   cat:"Network",   created:"14 Mar 2026",updated:"14 Mar, 11:42"},
+  {num:"CASE-1041",type:"Incident",  pri:"Critical",state:"new",     subject:"Production database unresponsive — Core Banking",   requester:"Arun Nair",     assigned:"Sanjay Patel",  cat:"Database",  created:"14 Mar 2026",updated:"14 Mar, 10:55"},
+  {num:"CASE-1040",type:"Service Request",pri:"Medium",state:"resolved",subject:"Email delivery delays — SMTP relay latency",    requester:"Meena Rao",     assigned:"Divya Thomas",  cat:"Email",     created:"13 Mar 2026",updated:"14 Mar, 09:10"},
+  {num:"CASE-1039",type:"Complaint", pri:"High",    state:"pending", subject:"MFA not triggering — HSBC Direct portal",          requester:"Rohit Gupta",   assigned:"Kiran Singh",   cat:"Security",  created:"13 Mar 2026",updated:"13 Mar, 18:32"},
+  {num:"CASE-1038",type:"Incident",  pri:"Low",     state:"closed",  subject:"Printer offline — Floor 4, Mumbai HO",             requester:"Sunita Desai",  assigned:"Help Desk L1",  cat:"Hardware",  created:"13 Mar 2026",updated:"13 Mar, 16:00"},
+  {num:"CASE-1037",type:"Incident",  pri:"Critical",state:"progress",subject:"Payment gateway timeout — SWIFT integration",       requester:"Vikram Joshi",  assigned:"Amit Kumar",    cat:"Integration",created:"13 Mar 2026",updated:"13 Mar, 15:45"},
+  {num:"CASE-1036",type:"Inquiry",   pri:"Medium",  state:"new",     subject:"Slow response on trade portal — latency > 5s",     requester:"Neha Kulkarni", assigned:"Infra L2",      cat:"Performance",created:"13 Mar 2026",updated:"13 Mar, 14:20"},
+  {num:"CASE-1035",type:"Incident",  pri:"High",    state:"progress",subject:"Certificate expiry warning — API gateway prod",     requester:"Suresh Iyer",   assigned:"Pradeep Nair",  cat:"Security",  created:"12 Mar 2026",updated:"13 Mar, 12:00"},
+  {num:"CASE-1034",type:"Incident",  pri:"Medium",  state:"resolved",subject:"Kafka consumer lag spike on transaction events",    requester:"Ravi Krishnan", assigned:"Bhushan Kadam", cat:"Middleware", created:"12 Mar 2026",updated:"12 Mar, 22:10"},
+  {num:"CASE-1033",type:"Service Request",pri:"Low",state:"closed",  subject:"Broken link on intranet HR portal",                requester:"Pooja Mehta",   assigned:"Web Team",      cat:"Software",  created:"11 Mar 2026",updated:"12 Mar, 09:00"},
+  {num:"CASE-1032",type:"Change",    pri:"High",    state:"pending", subject:"GKE node pool autoscaler not triggering — Prod",   requester:"Ankit Sharma",  assigned:"Cloud Ops",     cat:"Cloud/Infra",created:"11 Mar 2026",updated:"11 Mar, 19:15"},
+  {num:"CASE-1031",type:"Incident",  pri:"Critical",state:"resolved",subject:"Critical data sync failure — GL reconciliation",   requester:"Finance IT",    assigned:"Sanjay Patel",  cat:"Database",  created:"11 Mar 2026",updated:"11 Mar, 17:00"},
+  {num:"CASE-1030",type:"Incident",  pri:"Medium",  state:"new",     subject:"Solace message broker — topic subscription drop",  requester:"Ravi Krishnan", assigned:"Middleware Ops", cat:"Middleware", created:"10 Mar 2026",updated:"10 Mar, 16:30"},
+  {num:"CASE-1029",type:"Service Request",pri:"Low",state:"closed",  subject:"Conference room display not working — BKC L3",    requester:"Admin Desk",    assigned:"Help Desk L1",  cat:"Hardware",  created:"10 Mar 2026",updated:"10 Mar, 15:00"},
+  {num:"CASE-1028",type:"Incident",  pri:"High",    state:"progress",subject:"Redis cache eviction causing session drops — iQube",requester:"Dev Team",      assigned:"Bhushan Kadam", cat:"Application",created:"09 Mar 2026",updated:"10 Mar, 11:22"},
+];
+
+const priClass={Critical:"p-critical",High:"p-high",Medium:"p-medium",Low:"p-low"};
+const stClass={new:"st-new",progress:"st-progress",pending:"st-pending",resolved:"st-resolved",closed:"st-closed"};
+const stLabel={new:"New",progress:"In Progress",pending:"Pending",resolved:"Resolved",closed:"Closed"};
+const typeColour={Incident:"#b83232",  "Service Request":"#1d4ed8", Complaint:"#c97b00", Inquiry:"#166534", Change:"#6b21a8"};
+
+// Case tasks (for detail view)
+const detTasks = [
+  {id:"TASK-001",type:"investigate",title:"Identify root cause of SG-VPN-01 CPU spike",desc:"Review syslog, SNMP traps and traffic graphs. Correlate spike onset time with any config change.",assignee:"Rahul Mehta",group:"Network Ops",priority:"High",due:"2026-03-14",status:"in-progress",created:"14 Mar, 09:30",subtasks:["Pull syslog 08:00–10:00 SGT","Check SNMP CPU graph","Verify no change tickets"]},
+  {id:"TASK-002",type:"communicate",title:"Send business impact notification to Trading Ops leadership",desc:"Prepare and send status comms to Trading Ops VP and BCP team with scope, status and ETA.",assignee:"Priya Sharma",group:"Service Desk",priority:"High",due:"2026-03-14",status:"open",created:"14 Mar, 09:45",subtasks:["Draft email to VP Trading Ops","CC BCP team","Schedule 30-min update call"]},
+  {id:"TASK-003",type:"remediate",title:"Apply hotfix / restart VPN concentrator per runbook NW-042",desc:"Follow NW-042 runbook for controlled restart of SG-VPN-01. Verify user reconnection. Engage vendor TAC if restart fails.",assignee:"Rahul Mehta",group:"Network Ops",priority:"Medium",due:"2026-03-14",status:"open",created:"14 Mar, 11:40",subtasks:["Pre-restart checks","Perform restart","Validate 5 test users reconnect"]},
+];
+const detHistTasks = [
+  {id:"TASK-H001",type:"investigate",title:"Initial triage — confirm scope of affected users",assignee:"Priya Sharma",closed:"14 Mar, 10:15",duration:"53m",note:"Confirmed 45 users affected across floors 2–5. Mass auth failures from 09:15 SGT."},
+  {id:"TASK-H002",type:"escalate",title:"Escalate to L2 Network Operations",assignee:"Service Desk L1",closed:"14 Mar, 10:30",duration:"22m",note:"Ticket escalated after L1 confirmed scope beyond service desk capability."},
+  {id:"TASK-H003",type:"verify",title:"Rule out local firewall or ISP issue at SG office",assignee:"Onsite IT — SG",closed:"14 Mar, 10:52",duration:"40m",note:"Local firewall rules unchanged and ISP circuit healthy. Issue confirmed at concentrator level."},
+  {id:"TASK-H004",type:"document",title:"Log initial case details in system",assignee:"Priya Sharma",closed:"14 Mar, 09:35",duration:"12m",note:"Full case details, affected CI, business impact and requester info recorded."},
+  {id:"TASK-H005",type:"communicate",title:"Acknowledge case to requester — SLA notification sent",assignee:"System Bot",closed:"14 Mar, 09:23",duration:"1m",note:"Auto-acknowledgement sent to Priya Sharma. SLA clock started."},
+];
+
+// My Tasks (cross-case)
+const myTasks = {
+  overdue: [
+    {id:"MT-001",type:"document",title:"Complete post-mortem report for CASE-1031 data sync failure",caseNum:"CASE-1031",priority:"High",due:"2026-03-13",status:"open"},
+    {id:"MT-002",type:"review",title:"Review and close CASE-1034 Kafka lag — confirm fix stable",caseNum:"CASE-1034",priority:"Medium",due:"2026-03-12",status:"open"},
+  ],
+  today: [
+    {id:"MT-003",type:"remediate",title:"Apply Redis eviction policy fix — iQube prod cluster",caseNum:"CASE-1028",priority:"High",due:"2026-03-15",status:"in-progress"},
+    {id:"MT-004",type:"verify",title:"Verify CASE-1035 cert renewal deployed to API gateway",caseNum:"CASE-1035",priority:"High",due:"2026-03-15",status:"open"},
+    {id:"MT-005",type:"investigate",title:"Root cause analysis — CASE-1042 VPN concentrator",caseNum:"CASE-1042",priority:"High",due:"2026-03-15",status:"in-progress"},
+  ],
+  upcoming: [
+    {id:"MT-006",type:"action",title:"Present SLA compliance report to tech leadership",caseNum:"CASE-1036",priority:"Medium",due:"2026-03-17",status:"open"},
+    {id:"MT-007",type:"communicate",title:"Send weekly status update to stakeholders",caseNum:"CASE-1032",priority:"Low",due:"2026-03-18",status:"open"},
+  ]
+};
+
+const myHistTasks = [
+  {id:"MT-H01",type:"document",title:"Documented Solace broker recovery steps — CASE-1030",caseNum:"CASE-1030",assignee:"Bhushan Kadam",closed:"13 Mar, 17:30",duration:"1h 20m"},
+  {id:"MT-H02",type:"remediate",title:"Patched Kafka consumer config — CASE-1034",caseNum:"CASE-1034",assignee:"Bhushan Kadam",closed:"12 Mar, 22:10",duration:"3h 45m"},
+  {id:"MT-H03",type:"review",title:"Reviewed GKE autoscaler policy — CASE-1032",caseNum:"CASE-1032",assignee:"Bhushan Kadam",closed:"11 Mar, 18:00",duration:"55m"},
+  {id:"MT-H04",type:"verify",title:"Verified Redis fix in staging — CASE-1028",caseNum:"CASE-1028",assignee:"Bhushan Kadam",closed:"10 Mar, 14:30",duration:"40m"},
+  {id:"MT-H05",type:"communicate",title:"Stakeholder update sent for CASE-1031",caseNum:"CASE-1031",assignee:"Bhushan Kadam",closed:"11 Mar, 10:00",duration:"25m"},
+  {id:"MT-H06",type:"document",title:"RCA draft completed for database sync failure",caseNum:"CASE-1031",assignee:"Bhushan Kadam",closed:"11 Mar, 16:45",duration:"2h 10m"},
+];
+
+const tpClass={investigate:"tp-investigate",remediate:"tp-remediate",communicate:"tp-communicate",verify:"tp-verify",escalate:"tp-escalate",document:"tp-document",review:"tp-review",action:"tp-action"};
+const tpLabel={investigate:"Investigate",remediate:"Remediate",communicate:"Communicate",verify:"Verify",escalate:"Escalate",document:"Document",review:"Review",action:"Action Item"};
+const priCol={Critical:"var(--danger)",High:"var(--danger)",Medium:"var(--warn)",Low:"var(--neutral)"};
+
+// ══════════════════════════════════════════════
+// SIDEBAR TOGGLE
+// ══════════════════════════════════════════════
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const main = document.querySelector('.main');
+  sb.classList.toggle('collapsed');
+  main.classList.toggle('sidebar-collapsed');
+}
+
+// ══════════════════════════════════════════════
+// FILTER PANEL TOGGLE
+// ══════════════════════════════════════════════
+function toggleFilterPanel(panelId, btnId) {
+  const panel = document.getElementById(panelId);
+  const btn   = document.getElementById(btnId);
+  if (!panel) return;
+  panel.classList.toggle('open');
+  btn.style.borderColor = panel.classList.contains('open') ? 'var(--brand)' : '';
+  btn.style.color       = panel.classList.contains('open') ? 'var(--brand)' : '';
+}
+
+function updateCaseFilterCount() {
+  const active = [
+    document.getElementById('cf-status')?.value,
+    document.getElementById('cf-priority')?.value,
+    document.getElementById('cf-type')?.value,
+    document.getElementById('cf-assignee')?.value,
+  ].filter(Boolean).length;
+  const cnt = document.getElementById('case-filter-cnt');
+  const btn = document.getElementById('case-filter-btn');
+  if (!cnt || !btn) return;
+  cnt.style.display = active > 0 ? 'inline-flex' : 'none';
+  cnt.textContent   = active;
+  btn.classList.toggle('has-filters', active > 0);
+}
+
+function updateTaskFilterCount() {
+  const active = [
+    document.getElementById('task-filter-status')?.value,
+    document.getElementById('task-filter-type')?.value,
+    document.getElementById('task-filter-priority')?.value,
+    document.getElementById('task-filter-assignee')?.value,
+  ].filter(Boolean).length;
+  const cnt = document.getElementById('task-filter-cnt');
+  const btn = document.getElementById('task-filter-btn');
+  if (!cnt || !btn) return;
+  cnt.style.display = active > 0 ? 'inline-flex' : 'none';
+  cnt.textContent   = active;
+  btn.classList.toggle('has-filters', active > 0);
+}
+
+function clearCaseFilters() {
+  ['cf-status','cf-priority','cf-type','cf-assignee'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  filteredCases = [...cases];
+  renderCaseList();
+  updateCaseFilterCount();
+  renderCaseActiveChips();
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sb-nav li a').forEach(a => a.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  const moduleNames = {dashboard:'iQube — Dashboard','my-tasks':'iQube — My Tasks',list:'iQube — Cases','task-list':'iQube — Tasks',detail:'iQube — Case Detail'};
+  document.getElementById('hdr-module-name').textContent = moduleNames[name] || 'Case Management';
+  window.scrollTo(0,0);
+}
+
+function showDetail(caseNum) {
+  const c = cases.find(x => x.num === caseNum);
+  document.getElementById('det-num').textContent = caseNum;
+  document.getElementById('det-bc-num').textContent = caseNum;
+  document.getElementById('det-case-num').textContent = caseNum;
+  if (c) {
+    document.getElementById('det-subject').value = c.subject;
+    document.getElementById('det-state-badge').innerHTML = `<span class="st ${stClass[c.state]}">${stLabel[c.state]}</span>`;
+  }
+  renderDetTasks();
+  renderDetHistTasks();
+  // reset to details tab
+  document.querySelectorAll('.det-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+  document.querySelector('.det-tab').classList.add('active');
+  document.getElementById('tc-details').classList.add('active');
+  showView('detail');
+}
+
+function switchTab(el, tcId) {
+  document.querySelectorAll('.det-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(tcId).classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// CASE LIST
+// ══════════════════════════════════════════════
+let filteredCases = [...cases];
+
+function renderCaseList(data) {
+  data = data || filteredCases;
+  const tbody = document.getElementById('case-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(c => `
+    <tr onclick="showDetail('${c.num}')">
+      <td><input type="checkbox" onclick="event.stopPropagation()"/></td>
+      <td><a class="case-num" href="#" onclick="event.preventDefault();showDetail('${c.num}')">${c.num}</a></td>
+      <td><span style="font-size:11px;font-weight:600;color:${typeColour[c.type]||'#333'}">${c.type}</span></td>
+      <td><span class="prio ${priClass[c.pri]}">${c.pri}</span></td>
+      <td><span class="st ${stClass[c.state]}">${stLabel[c.state]}</span></td>
+      <td><div class="short-desc">${c.subject}</div></td>
+      <td style="font-size:12.5px">${c.requester}</td>
+      <td style="font-size:12.5px">${c.assigned}</td>
+      <td><span class="ct">${c.cat}</span></td>
+      <td class="dt">${c.created}</td>
+      <td class="dt">${c.updated}</td>
+    </tr>`).join('');
+  const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setT('list-cnt', data.length);
+  setT('filter-count-label', `Showing 1–${Math.min(20,data.length)} of ${data.length}`);
+  setT('pg-label', `Showing 1–${Math.min(20,data.length)} of ${data.length} records`);
+}
+
+function filterCases(q) {
+  const query    = (q !== undefined ? q : '').toLowerCase();
+  const status   = document.getElementById('cf-status')?.value   || '';
+  const priority = document.getElementById('cf-priority')?.value || '';
+  const type     = document.getElementById('cf-type')?.value     || '';
+  const assignee = document.getElementById('cf-assignee')?.value || '';
+
+  filteredCases = cases.filter(c =>
+    (!query    || c.subject.toLowerCase().includes(query) || c.num.toLowerCase().includes(query) || c.requester.toLowerCase().includes(query)) &&
+    (!status   || stLabel[c.state] === status || c.state === status.toLowerCase().replace(' ','-')) &&
+    (!priority || c.pri === priority) &&
+    (!type     || c.type === type) &&
+    (!assignee || c.assigned === assignee)
+  );
+  renderCaseList();
+  updateCaseFilterCount();
+  renderCaseActiveChips();
+}
+
+function renderCaseActiveChips() {
+  const chips = [];
+  const status   = document.getElementById('cf-status')?.value;
+  const priority = document.getElementById('cf-priority')?.value;
+  const type     = document.getElementById('cf-type')?.value;
+  const assignee = document.getElementById('cf-assignee')?.value;
+  if (status)   chips.push({label:'State',   val:status,   clear:"document.getElementById('cf-status').value='';filterCases()"});
+  if (priority) chips.push({label:'Priority',val:priority, clear:"document.getElementById('cf-priority').value='';filterCases()"});
+  if (type)     chips.push({label:'Type',    val:type,     clear:"document.getElementById('cf-type').value='';filterCases()"});
+  if (assignee) chips.push({label:'Assigned',val:assignee, clear:"document.getElementById('cf-assignee').value='';filterCases()"});
+
+  const row = document.getElementById('case-active-chips');
+  if (!row) return;
+  if (chips.length === 0) { row.style.display = 'none'; row.innerHTML = ''; return; }
+  row.style.display = 'flex';
+  row.innerHTML = chips.map(c => `
+    <span class="chip"><strong>${c.label}:</strong> ${c.val}
+      <button class="chip-x" onclick="${c.clear}">×</button>
+    </span>`).join('') +
+    `<button onclick="clearCaseFilters()" style="font-family:inherit;font-size:11.5px;padding:2px 8px;border:none;background:none;cursor:pointer;color:var(--brand);font-weight:600">Clear all</button>`;
+}
+
+function openNewCaseModal(){ document.getElementById('case-modal').classList.add('open'); }
+function closeCaseModal(){ document.getElementById('case-modal').classList.remove('open'); }
+function addCase(){
+  const subj = document.getElementById('nc-subject').value.trim();
+  if (!subj) { alert('Please enter a subject.'); return; }
+  const newNum = 'CASE-' + (1043 + cases.length);
+  cases.unshift({
+    num: newNum, type: document.getElementById('nc-type').value,
+    pri: document.getElementById('nc-priority').value, state: 'new',
+    subject: subj, requester: document.getElementById('nc-requester').value || 'Unknown',
+    assigned: 'Unassigned', cat: document.getElementById('nc-category').value,
+    created: '15 Mar 2026', updated: 'Just now'
+  });
+  renderCaseList();
+  closeCaseModal();
+  ['nc-subject','nc-requester','nc-desc'].forEach(id => document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════
+// DETAIL TASKS
+// ══════════════════════════════════════════════
+function dueClass(d){ const dt=new Date(d),now=new Date('2026-03-15'); if(dt<now) return 'ov'; if(dt.toDateString()===now.toDateString()) return 'td'; return 'ok'; }
+function fmtDue(d){ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+
+function renderDetTasks(){
+  const c = document.getElementById('det-current-tasks');
+  if (!c) return;
+  c.innerHTML = detTasks.map((t,i) => `
+    <div class="task-row">
+      <div><div class="tchk ${t.status==='in-progress'?'ip':''}" onclick="toggleDetTask(${i})"></div></div>
+      <div>
+        <div class="t-title ${t.status==='done'?'done-txt':''}">${t.title}</div>
+        <div class="t-meta">
+          <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+          <span class="t-mi">👤 <span class="lbl">${t.assignee}</span></span>
+          <span class="t-mi">🏷️ ${t.group}</span>
+          <span class="t-mi">⚑ <span style="color:${priCol[t.priority]};font-weight:700">${t.priority}</span></span>
+          <span class="t-mi" style="font-family:'IBM Plex Mono',monospace;font-size:11px">${t.id}</span>
+        </div>
+        <div class="t-desc">${t.desc}</div>
+        ${t.subtasks?`<div style="margin-top:7px;display:flex;flex-direction:column;gap:3px">${t.subtasks.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:13px;height:13px;border:1.5px solid var(--border);border-radius:2px;display:inline-block;flex-shrink:0"></span>${s}</div>`).join('')}</div>`:''}
+      </div>
+      <div class="t-right">
+        <span class="t-due ${dueClass(t.due)}">📅 ${fmtDue(t.due)}</span>
+        <span class="st ${t.status==='in-progress'?'st-progress':'st-open'}" style="font-size:10.5px">${t.status==='in-progress'?'In Progress':'Open'}</span>
+        <span style="font-size:11px;color:var(--neutral)">${t.created}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderDetHistTasks(){
+  const c = document.getElementById('det-hist-tasks');
+  if (!c) return;
+  c.innerHTML = detHistTasks.map(t => `
+    <div class="hist-row">
+      <div><div class="hist-icon">✅</div></div>
+      <div>
+        <div class="hist-title">${t.title}</div>
+        <div class="hist-meta">
+          <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+          <span>👤 ${t.assignee}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px">${t.id}</span>
+        </div>
+        ${t.note?`<div style="font-size:12px;color:var(--text-muted);margin-top:5px;padding:4px 8px;background:#f8fafd;border-left:3px solid var(--border)">${t.note}</div>`:''}
+      </div>
+      <div class="hist-r">
+        <div class="hist-when">✓ ${t.closed}</div>
+        <div class="hist-dur">⏱ ${t.duration}</div>
+        <span class="st st-resolved" style="font-size:10.5px;margin-top:4px;display:inline-block">Resolved</span>
+      </div>
+    </div>`).join('');
+}
+
+function toggleDetTask(i){
+  const t=detTasks[i];
+  if(t.status==='open') t.status='in-progress';
+  else if(t.status==='in-progress') t.status='done';
+  else t.status='open';
+  renderDetTasks();
+}
+
+function openTaskModal(){ document.getElementById('task-modal').classList.add('open'); }
+function closeTaskModal(){ document.getElementById('task-modal').classList.remove('open'); }
+function addTask(){
+  const title=document.getElementById('mt-title').value.trim();
+  if(!title){alert('Please enter a task title.');return;}
+  detTasks.unshift({id:'TASK-00'+(detTasks.length+4),type:document.getElementById('mt-type').value,title,desc:document.getElementById('mt-desc').value,assignee:document.getElementById('mt-assignee').value||'Unassigned',group:'—',priority:document.getElementById('mt-priority').value,due:document.getElementById('mt-due').value,status:'open',created:'Just now'});
+  renderDetTasks();
+  closeTaskModal();
+  ['mt-title','mt-desc','mt-assignee'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════
+// MY TASKS VIEW
+// ══════════════════════════════════════════════
+function renderMyTasks(){
+  const cols=[
+    {key:'overdue',label:'Overdue',color:'var(--danger)',bg:'#fde8e8'},
+    {key:'today',  label:'Due Today',color:'var(--warn)', bg:'#fef9c3'},
+    {key:'upcoming',label:'Upcoming', color:'var(--accent)',bg:'#dbeafe'},
+  ];
+  document.getElementById('mt-board').innerHTML = cols.map(col => `
+    <div class="mt-col">
+      <div class="mt-col-hdr">
+        <span style="width:10px;height:10px;border-radius:50%;background:${col.color};flex-shrink:0;display:inline-block"></span>
+        ${col.label}
+        <span class="cnt-pill" style="background:${col.bg};color:${col.color}">${myTasks[col.key].length}</span>
+      </div>
+      ${myTasks[col.key].map(t => `
+        <div class="mt-task-card" onclick="showDetail('${t.caseNum}')">
+          <div class="mt-tc-title">${t.title}</div>
+          <div class="mt-tc-meta">
+            <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+            <span class="mt-tc-case">${t.caseNum}</span>
+            <span style="font-size:11px;font-weight:700;color:${priCol[t.priority]}">${t.priority}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="mt-tc-due ${col.key==='overdue'?'ov':col.key==='today'?'td':'ok'}">📅 ${fmtDue(t.due)}</span>
+            <span class="st ${t.status==='in-progress'?'st-progress':'st-open'}" style="font-size:10.5px">${t.status==='in-progress'?'In Progress':'Open'}</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  // Historical
+  document.getElementById('my-hist-timeline').innerHTML = myHistTasks.map(t => `
+    <div class="ht-entry">
+      <div class="ht-dot"></div>
+      <div class="ht-body">
+        <div class="ht-title">${t.title}</div>
+        <div class="ht-meta">
+          <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+          <span class="mt-tc-case">${t.caseNum}</span>
+        </div>
+      </div>
+      <div class="ht-right">
+        <div>✓ ${t.closed}</div>
+        <div class="ht-dur">⏱ ${t.duration}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard(){
+  // Recent cases table
+  document.getElementById('dash-recent-body').innerHTML = cases.slice(0,7).map(c=>`
+    <tr onclick="showDetail('${c.num}')">
+      <td><a class="case-num" href="#" onclick="event.preventDefault();showDetail('${c.num}')">${c.num}</a></td>
+      <td><div style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px">${c.subject}</div></td>
+      <td><span class="prio ${priClass[c.pri]}">${c.pri}</span></td>
+      <td><span class="st ${stClass[c.state]}" style="font-size:11px">${stLabel[c.state]}</span></td>
+      <td style="font-size:12px">${c.assigned}</td>
+      <td class="dt">${c.updated}</td>
+    </tr>`).join('');
+
+  // Category bars
+  const catCounts={};
+  cases.filter(c=>['new','progress','pending'].includes(c.state)).forEach(c=>catCounts[c.cat]=(catCounts[c.cat]||0)+1);
+  const sorted=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max=sorted[0]?.[1]||1;
+  const barColors=['#DB0011','#b45300','#1a7a4a','#1a56db','#5b21b6','#767676'];
+  document.getElementById('cat-bars').innerHTML=sorted.map(([cat,cnt],i)=>`
+    <div class="bar-row">
+      <div class="bar-lbl">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(cnt/max*100).toFixed(0)}%;background:${barColors[i%barColors.length]}"></div></div>
+      <div class="bar-val">${cnt}</div>
+    </div>`).join('');
+
+  // My tasks summary
+  const allMyOpen=[...myTasks.overdue,...myTasks.today,...myTasks.upcoming];
+  document.getElementById('dash-my-tasks-summary').innerHTML = allMyOpen.slice(0,5).map(t=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f0f3fa;cursor:pointer" onclick="showView('my-tasks')">
+      <span class="tp ${tpClass[t.type]}" style="flex-shrink:0">${tpLabel[t.type]}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${t.caseNum}</div>
+      </div>
+      <span class="mt-tc-due ${t.due<'2026-03-15'?'ov':t.due==='2026-03-15'?'td':'ok'}" style="font-size:11px;white-space:nowrap">📅 ${fmtDue(t.due)}</span>
+    </div>`).join('') + `<div style="padding:8px 14px;text-align:center"><a href="#" onclick="showView('my-tasks')" style="font-size:12px;color:var(--accent);text-decoration:none">View all ${allMyOpen.length} tasks →</a></div>`;
+
+  // Team workload
+  const team=[
+    {init:'RM',name:'Rahul Mehta',col:'#1a7a4a',open:8,ip:3,done:12},
+    {init:'SP',name:'Sanjay Patel',col:'#b83232',open:6,ip:4,done:9},
+    {init:'BK',name:'Bhushan Kadam',col:'#0077CC',open:5,ip:3,done:17},
+    {init:'DT',name:'Divya Thomas',col:'#c97b00',open:4,ip:2,done:14},
+    {init:'KS',name:'Kiran Singh',col:'#6b21a8',open:7,ip:5,done:8},
+  ];
+  document.getElementById('team-workload').innerHTML=team.map(m=>`
+    <div class="wl-row">
+      <div class="wl-av" style="background:${m.col}">${m.init}</div>
+      <div>
+        <div class="wl-name">${m.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${m.open} open · ${m.ip} in progress</div>
+      </div>
+      <div class="wl-bars">
+        ${Array(m.ip).fill('<div class="wl-dot" style="background:var(--warn)"></div>').join('')}
+        ${Array(Math.min(m.open,6)).fill('<div class="wl-dot" style="background:#dbeafe;border:1px solid var(--accent)"></div>').join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// MODALS backdrop close
+// ══════════════════════════════════════════════
+window.addEventListener('click', function(e){
+  ['task-modal','case-modal'].forEach(id=>{
+    const m=document.getElementById(id);
+    if(m && e.target===m) m.classList.remove('open');
+  });
+});
+
+// ══════════════════════════════════════════════
+// ALL TASKS — flat list across all cases
+// ══════════════════════════════════════════════
+const allTasks = [
+  {id:"TASK-001",type:"investigate",title:"Identify root cause of SG-VPN-01 CPU spike",            caseNum:"CASE-1042",assignee:"Rahul Mehta",   priority:"High",  status:"in-progress",due:"2026-03-14",created:"14 Mar, 09:30"},
+  {id:"TASK-002",type:"communicate",title:"Send business impact notification to Trading Ops",       caseNum:"CASE-1042",assignee:"Priya Sharma",  priority:"High",  status:"open",       due:"2026-03-14",created:"14 Mar, 09:45"},
+  {id:"TASK-003",type:"remediate",  title:"Apply hotfix / restart VPN concentrator per NW-042",    caseNum:"CASE-1042",assignee:"Rahul Mehta",   priority:"Medium",status:"open",       due:"2026-03-14",created:"14 Mar, 11:40"},
+  {id:"TASK-004",type:"investigate",title:"Diagnose Core Banking DB unresponsiveness",              caseNum:"CASE-1041",assignee:"Sanjay Patel",  priority:"High",  status:"in-progress",due:"2026-03-14",created:"14 Mar, 10:00"},
+  {id:"TASK-005",type:"escalate",   title:"Escalate to DBA team — P1 response required",           caseNum:"CASE-1041",assignee:"Arun Nair",     priority:"High",  status:"done",       due:"2026-03-14",created:"14 Mar, 10:05"},
+  {id:"TASK-006",type:"communicate",title:"Notify Core Banking stakeholders of outage",             caseNum:"CASE-1041",assignee:"Sanjay Patel",  priority:"High",  status:"open",       due:"2026-03-14",created:"14 Mar, 10:15"},
+  {id:"TASK-007",type:"investigate",title:"Review MFA logs — HSBC Direct portal auth failures",    caseNum:"CASE-1039",assignee:"Kiran Singh",   priority:"High",  status:"in-progress",due:"2026-03-14",created:"13 Mar, 18:00"},
+  {id:"TASK-008",type:"verify",     title:"Verify MFA bypass not exploited — security check",      caseNum:"CASE-1039",assignee:"Kiran Singh",   priority:"High",  status:"open",       due:"2026-03-15",created:"13 Mar, 18:30"},
+  {id:"TASK-009",type:"remediate",  title:"Restart SWIFT gateway integration service",             caseNum:"CASE-1037",assignee:"Amit Kumar",    priority:"High",  status:"in-progress",due:"2026-03-13",created:"13 Mar, 15:00"},
+  {id:"TASK-010",type:"verify",     title:"Validate payment transactions resumed — spot check 10", caseNum:"CASE-1037",assignee:"Amit Kumar",    priority:"High",  status:"open",       due:"2026-03-13",created:"13 Mar, 15:30"},
+  {id:"TASK-011",type:"document",   title:"Document SWIFT timeout root cause and resolution",      caseNum:"CASE-1037",assignee:"Vikram Joshi",  priority:"Medium",status:"open",       due:"2026-03-16",created:"13 Mar, 16:00"},
+  {id:"TASK-012",type:"remediate",  title:"Renew SSL certificate — API gateway prod",              caseNum:"CASE-1035",assignee:"Pradeep Nair",  priority:"High",  status:"in-progress",due:"2026-03-14",created:"12 Mar, 09:00"},
+  {id:"TASK-013",type:"verify",     title:"Confirm cert renewal deployed and services healthy",    caseNum:"CASE-1035",assignee:"Bhushan Kadam", priority:"High",  status:"open",       due:"2026-03-15",created:"12 Mar, 09:30"},
+  {id:"TASK-014",type:"remediate",  title:"Patch Kafka consumer config — transaction events",      caseNum:"CASE-1034",assignee:"Bhushan Kadam", priority:"Medium",status:"done",       due:"2026-03-12",created:"12 Mar, 18:00"},
+  {id:"TASK-015",type:"document",   title:"Post-mortem report — Kafka consumer lag spike",         caseNum:"CASE-1034",assignee:"Bhushan Kadam", priority:"Medium",status:"open",       due:"2026-03-13",created:"12 Mar, 22:00"},
+  {id:"TASK-016",type:"investigate",title:"Investigate GKE autoscaler policy — Prod cluster",     caseNum:"CASE-1032",assignee:"Bhushan Kadam", priority:"High",  status:"in-progress",due:"2026-03-15",created:"11 Mar, 19:00"},
+  {id:"TASK-017",type:"action",     title:"Apply updated HPA config to Prod node pool",           caseNum:"CASE-1032",assignee:"Cloud Ops",     priority:"High",  status:"open",       due:"2026-03-15",created:"11 Mar, 19:15"},
+  {id:"TASK-018",type:"review",     title:"Review autoscaler metrics post-fix — 24h monitoring",  caseNum:"CASE-1032",assignee:"Ankit Sharma",  priority:"Medium",status:"open",       due:"2026-03-17",created:"11 Mar, 20:00"},
+  {id:"TASK-019",type:"investigate",title:"Root cause — GL reconciliation sync failure",           caseNum:"CASE-1031",assignee:"Sanjay Patel",  priority:"High",  status:"done",       due:"2026-03-11",created:"11 Mar, 10:00"},
+  {id:"TASK-020",type:"remediate",  title:"Replay failed GL sync transactions",                    caseNum:"CASE-1031",assignee:"Sanjay Patel",  priority:"High",  status:"done",       due:"2026-03-11",created:"11 Mar, 13:00"},
+  {id:"TASK-021",type:"document",   title:"Complete RCA and stakeholder report — CASE-1031",      caseNum:"CASE-1031",assignee:"Bhushan Kadam", priority:"Medium",status:"open",       due:"2026-03-13",created:"11 Mar, 17:00"},
+  {id:"TASK-022",type:"investigate",title:"Diagnose Solace topic subscription drop",              caseNum:"CASE-1030",assignee:"Middleware Ops", priority:"Medium",status:"in-progress",due:"2026-03-15",created:"10 Mar, 16:00"},
+  {id:"TASK-023",type:"remediate",  title:"Re-subscribe affected consumers — Solace broker",      caseNum:"CASE-1030",assignee:"Ravi Krishnan", priority:"Medium",status:"open",       due:"2026-03-15",created:"10 Mar, 16:30"},
+  {id:"TASK-024",type:"remediate",  title:"Apply Redis eviction policy fix — iQube prod",         caseNum:"CASE-1028",assignee:"Bhushan Kadam", priority:"High",  status:"in-progress",due:"2026-03-15",created:"09 Mar, 11:00"},
+  {id:"TASK-025",type:"verify",     title:"Monitor session drop rate post-fix — 1h window",       caseNum:"CASE-1028",assignee:"Dev Team",      priority:"Medium",status:"open",       due:"2026-03-15",created:"09 Mar, 11:30"},
+  {id:"TASK-026",type:"document",   title:"Update Redis config runbook with fix details",          caseNum:"CASE-1028",assignee:"Bhushan Kadam", priority:"Low",   status:"open",       due:"2026-03-18",created:"09 Mar, 12:00"},
+  {id:"TASK-027",type:"review",     title:"Weekly SLA compliance review — all open cases",        caseNum:"CASE-1036",assignee:"Bhushan Kadam", priority:"Medium",status:"open",       due:"2026-03-17",created:"13 Mar, 09:00"},
+  {id:"TASK-028",type:"communicate",title:"Send weekly team status update to stakeholders",        caseNum:"CASE-1032",assignee:"Bhushan Kadam", priority:"Low",   status:"open",       due:"2026-03-18",created:"14 Mar, 08:00"},
+];
+
+let filteredTasks = [...allTasks];
+
+const taskStatusLabel = {open:"Open","in-progress":"In Progress",done:"Done"};
+const taskStatusClass = {open:"st-open","in-progress":"st-progress",done:"st-resolved"};
+
+function renderTaskList(data) {
+  data = data || filteredTasks;
+  const tbody = document.getElementById('task-list-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = data.map(t => `
+    <tr onclick="showDetail('${t.caseNum}')">
+      <td><input type="checkbox" onclick="event.stopPropagation()"/></td>
+      <td><span class="case-num" style="font-size:11.5px">${t.id}</span></td>
+      <td><span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span></td>
+      <td><div style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:var(--text)">${t.title}</div></td>
+      <td><span class="prio ${priClass[t.priority]}">${t.priority}</span></td>
+      <td><span class="st ${taskStatusClass[t.status]}">${taskStatusLabel[t.status]}</span></td>
+      <td><a class="case-num" href="#" onclick="event.preventDefault();event.stopPropagation();showDetail('${t.caseNum}')">${t.caseNum}</a></td>
+      <td style="font-size:12.5px;color:var(--text)">${t.assignee}</td>
+      <td><span class="t-due ${dueClass(t.due)}" style="font-size:12px">📅 ${fmtDue(t.due)}</span></td>
+      <td class="dt">${t.created}</td>
+    </tr>`).join('');
+  const cnt = data.length;
+  const cntEl = document.getElementById('task-list-cnt');
+  const lblEl = document.getElementById('task-list-count-label');
+  const pgEl  = document.getElementById('task-pg-label');
+  if (cntEl) cntEl.textContent = cnt;
+  if (lblEl) lblEl.textContent = `Showing ${cnt} task${cnt!==1?'s':''}`;
+  if (pgEl)  pgEl.textContent  = `Showing 1–${Math.min(20,cnt)} of ${cnt} tasks`;
+}
+
+function filterTasks(q) {
+  const query  = (q !== undefined ? q : (document.getElementById('task-search-input')?.value||'')).toLowerCase();
+  const status = document.getElementById('task-filter-status')?.value||'';
+  const type   = document.getElementById('task-filter-type')?.value||'';
+  const prio   = document.getElementById('task-filter-priority')?.value||'';
+  const person = document.getElementById('task-filter-assignee')?.value||'';
+  filteredTasks = allTasks.filter(t =>
+    (!query  || t.title.toLowerCase().includes(query)||t.id.toLowerCase().includes(query)||t.caseNum.toLowerCase().includes(query)) &&
+    (!status || t.status===status) &&
+    (!type   || t.type===type) &&
+    (!prio   || t.priority===prio) &&
+    (!person || t.assignee===person)
+  );
+  renderTaskList();
+  updateTaskFilterCount();
+  renderTaskActiveChips();
+}
+
+function renderTaskActiveChips() {
+  const chips = [];
+  const status = document.getElementById('task-filter-status')?.value;
+  const type   = document.getElementById('task-filter-type')?.value;
+  const prio   = document.getElementById('task-filter-priority')?.value;
+  const person = document.getElementById('task-filter-assignee')?.value;
+  const statusLabels = {open:'Open','in-progress':'In Progress',done:'Done'};
+  if (status) chips.push({label:'Status',   val:statusLabels[status]||status, clear:"document.getElementById('task-filter-status').value='';filterTasks()"});
+  if (type)   chips.push({label:'Type',     val:type.charAt(0).toUpperCase()+type.slice(1), clear:"document.getElementById('task-filter-type').value='';filterTasks()"});
+  if (prio)   chips.push({label:'Priority', val:prio,   clear:"document.getElementById('task-filter-priority').value='';filterTasks()"});
+  if (person) chips.push({label:'Assignee', val:person, clear:"document.getElementById('task-filter-assignee').value='';filterTasks()"});
+
+  const row = document.getElementById('task-active-chips');
+  if (!row) return;
+  if (chips.length === 0) { row.style.display = 'none'; row.innerHTML = ''; return; }
+  row.style.display = 'flex';
+  row.innerHTML = chips.map(c => `
+    <span class="chip"><strong>${c.label}:</strong> ${c.val}
+      <button class="chip-x" onclick="${c.clear}">×</button>
+    </span>`).join('') +
+    `<button onclick="clearTaskFilters()" style="font-family:inherit;font-size:11.5px;padding:2px 8px;border:none;background:none;cursor:pointer;color:var(--brand);font-weight:600">Clear all</button>`;
+}
+
+function clearTaskFilters() {
+  ['task-filter-status','task-filter-type','task-filter-priority','task-filter-assignee'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const si=document.getElementById('task-search-input'); if(si) si.value='';
+  filteredTasks=[...allTasks];
+  renderTaskList();
+  updateTaskFilterCount();
+  renderTaskActiveChips();
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+function initApp() {
+  renderCaseList();
+  renderTaskList();
+  renderMyTasks();
+  renderDashboard();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>
