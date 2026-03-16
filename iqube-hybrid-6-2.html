@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>iQube — Case Management</title>
+
+<!-- AG Grid Community -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/styles/ag-grid.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/styles/ag-theme-alpine.css"/>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/dist/ag-grid-community.min.js"></script>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+/* ══════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════ */
+:root {
+  --brand:      #DB0011;
+  --brand-dark: #a80010;
+  --brand-light:#fdf0f1;
+  --success:    #1a7a4a;
+  --warn:       #b45300;
+  --danger:     #a80010;
+  --surface:    #f5f5f5;
+  --border:     #e0e0e0;
+  --text:       #333333;
+  --text-muted: #666666;
+  --text-light: #999999;
+  --header-h:   52px;
+  --sidebar-w:  200px;
+  --radius:     2px;
+
+  /* AG Grid HSBC theme overrides */
+  --ag-font-family: 'DM Sans', sans-serif;
+  --ag-font-size: 13px;
+  --ag-header-background-color: #fafafa;
+  --ag-header-foreground-color: #666666;
+  --ag-border-color: #e0e0e0;
+  --ag-row-border-color: #f0f0f0;
+  --ag-row-hover-color: #fff8f8;
+  --ag-selected-row-background-color: #fdf0f1;
+  --ag-checkbox-checked-color: #DB0011;
+  --ag-range-selection-border-color: #DB0011;
+  --ag-input-focus-border-color: #DB0011;
+  --ag-header-column-separator-color: #e0e0e0;
+  --ag-cell-horizontal-padding: 14px;
+  --ag-row-height: 40px;
+  --ag-header-height: 38px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);font-size:13.5px;min-height:100vh}
+
+/* ══ HEADER ══ */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:200;height:var(--header-h);background:#fff;display:flex;align-items:center;padding:0 16px;gap:12px;border-bottom:3px solid var(--brand);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.hdr-btn{background:none;border:none;color:var(--text);font-size:18px;cursor:pointer;padding:4px 6px;border-radius:2px;line-height:1;flex-shrink:0}
+.hdr-btn:hover{background:#f5f5f5}
+.hdr-sep{width:1px;height:24px;background:#e0e0e0;flex-shrink:0}
+.hdr-iqube{font-size:13px;font-weight:700;color:var(--brand);letter-spacing:.4px}
+.hdr-module{color:var(--text-muted);font-size:12px;white-space:nowrap}
+.hdr-search{margin-left:auto;background:#f5f5f5;border:1px solid var(--border);border-radius:2px;color:var(--text);padding:5px 12px;font-size:12.5px;width:220px;outline:none;font-family:inherit}
+.hdr-search:focus{border-color:var(--brand);background:#fff}
+.hdr-search::placeholder{color:#bbb}
+.hdr-notif{position:relative;cursor:pointer;width:32px;height:32px;border-radius:50%;background:#f5f5f5;border:1px solid var(--border);display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.hdr-notif-dot{position:absolute;top:2px;right:2px;width:7px;height:7px;background:var(--brand);border-radius:50%;border:2px solid #fff}
+.hdr-avatar{width:32px;height:32px;border-radius:50%;background:var(--brand);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+
+/* ══ LAYOUT ══ */
+.layout{display:flex;padding-top:var(--header-h);min-height:100vh}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:var(--sidebar-w);background:#fff;border-right:1px solid var(--border);flex-shrink:0;position:fixed;top:var(--header-h);left:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding:6px 0;z-index:100;transition:width .2s ease}
+.sidebar.collapsed{width:0;padding:0;border:none}
+.sb-section{padding:10px 10px 2px}
+.sb-label{color:#bbb;font-size:9.5px;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;padding:0 4px;white-space:nowrap}
+.sb-nav{list-style:none;margin-top:4px}
+.sb-nav li a{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;color:var(--text-muted);text-decoration:none;font-size:12.5px;border-left:3px solid transparent;transition:all .12s}
+.sb-nav li a:hover{color:var(--brand);background:var(--brand-light)}
+.sb-nav li a.active{color:var(--brand);background:var(--brand-light);border-left-color:var(--brand);font-weight:600}
+.sb-nav .ni{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.sb-badge{background:#f0f0f0;color:var(--text-muted);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:10px;white-space:nowrap}
+.sb-badge.red{background:var(--brand-light);color:var(--brand)}
+
+/* ══ MAIN ══ */
+.main{flex:1;overflow-x:hidden;margin-left:var(--sidebar-w);transition:margin-left .2s ease}
+.main.sidebar-collapsed{margin-left:0}
+.view{display:none}
+.view.active{display:block}
+
+/* ══ BREADCRUMB ══ */
+.bc{padding:6px 20px;font-size:12px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:5px;color:var(--text-light)}
+.bc a{color:var(--brand);text-decoration:none}
+.bc a:hover{text-decoration:underline}
+.bc-sep{color:#ccc}
+
+/* ══ PAGE BAR ══ */
+.page-bar{background:#fff;border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.page-bar h2{font-size:14.5px;font-weight:700;color:var(--text)}
+.cnt-badge{background:#f0f0f0;color:var(--text-muted);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px}
+.spacer{flex:1}
+.toolbar-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{font-family:inherit;font-size:12px;padding:5px 14px;border-radius:2px;cursor:pointer;font-weight:600;border:none;transition:all .12s;letter-spacing:.1px}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:#fff;color:var(--text);border:1px solid #ccc}
+.btn-ghost:hover{border-color:var(--brand);color:var(--brand)}
+.btn-success{background:#1a7a4a;color:#fff}
+.btn-success:hover{background:#155f39}
+
+/* ══ AG GRID WRAPPER ══ */
+.ag-wrap{background:#fff}
+.grid-container{display:flex;flex-direction:column;background:#fff}
+.grid-container .ag-wrap{height:520px}
+
+/* AG Grid column header text uppercase */
+.ag-theme-alpine .ag-header-cell-label{text-transform:uppercase;letter-spacing:.5px;font-size:10.5px;font-weight:700}
+.ag-theme-alpine .ag-row{font-family:'DM Sans',sans-serif}
+.ag-theme-alpine .ag-paging-panel{border-top:1px solid var(--border);background:#fafafa;font-size:12px;color:var(--text-muted);padding:0 16px}
+.ag-theme-alpine .ag-paging-button{color:var(--brand)}
+.ag-theme-alpine .ag-icon{color:var(--brand)}
+/* Ensure cell content doesn't get clipped — overflow visible, ellipsis only on explicitly truncated cells */
+.ag-theme-alpine .ag-cell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center}
+.ag-theme-alpine .ag-cell-wrapper{width:100%}
+
+/* ══ GRID STATUS BAR ══ */
+.grid-status{background:#fafafa;border-top:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:16px;font-size:11.5px;color:var(--text-muted)}
+.grid-status .sel-info{color:var(--brand);font-weight:600}
+.bulk-actions{display:none;align-items:center;gap:8px}
+.bulk-actions.visible{display:flex}
+
+/* ══ CELL RENDERERS ══ */
+.cell-case-num{color:var(--brand);font-weight:600;font-size:12px;font-family:'IBM Plex Mono',monospace;cursor:pointer;text-decoration:none}
+.cell-case-num:hover{text-decoration:underline}
+.prio{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.3px}
+.p-critical{background:#fdf0f1;color:#a80010}
+.p-high{background:#fff5e6;color:#b45300}
+.p-medium{background:#eaf5ee;color:#166534}
+.p-low{background:#f5f5f5;color:#767676}
+.st{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:2px}
+.st-new{background:#e8f0fe;color:#1a56db}
+.st-progress{background:#fff8e6;color:#b45300}
+.st-pending{background:#f3f0ff;color:#5b21b6}
+.st-resolved{background:#eaf5ee;color:#166534}
+.st-closed{background:#f5f5f5;color:#767676}
+.tp{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;text-transform:uppercase;letter-spacing:.3px}
+.tp-investigate{background:#e8f0fe;color:#1a56db}
+.tp-remediate{background:#fff5e6;color:#b45300}
+.tp-communicate{background:#f3f0ff;color:#5b21b6}
+.tp-verify{background:#eaf5ee;color:#166534}
+.tp-escalate{background:#fdf0f1;color:#a80010}
+.tp-document{background:#f5f5f5;color:#555}
+.tp-review{background:#eaf5ee;color:#166534}
+.tp-action{background:#fff8e6;color:#b45300}
+.due-ok{color:var(--text-muted)}
+.due-today{color:var(--warn);font-weight:600}
+.due-overdue{color:var(--brand);font-weight:700}
+.ct-pill{background:#f0f0f0;color:var(--text-muted);font-size:10px;padding:2px 6px;border-radius:2px;font-weight:500}
+
+/* ══ FILTER PANEL ══ */
+.filter-panel{background:#fafafa;border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;padding:0 20px}
+.filter-panel.open{max-height:160px;padding:10px 20px}
+.fp-inner{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.fp-field{display:flex;flex-direction:column;gap:3px}
+.fp-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.fp-select{font-family:inherit;font-size:12px;padding:5px 8px;border:1px solid var(--border);border-radius:2px;background:#fff;color:var(--text);min-width:110px;cursor:pointer}
+.fp-select:focus{border-color:var(--brand);outline:none}
+.filter-toggle-btn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12px;font-weight:600;padding:5px 11px;border-radius:2px;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text-muted);transition:all .12s}
+.filter-toggle-btn:hover{border-color:var(--brand);color:var(--brand)}
+.filter-toggle-btn.has-filters{border-color:var(--brand);color:var(--brand);background:var(--brand-light)}
+.filter-cnt{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px;font-weight:700}
+.active-chips{display:none;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 20px;background:#fff;border-bottom:1px solid var(--border)}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--brand-light);border:1px solid #f5c0c4;border-radius:2px;padding:2px 7px;font-size:11px;color:var(--brand)}
+.chip strong{font-weight:700}
+.chip-x{background:none;border:none;cursor:pointer;color:var(--brand);font-size:13px;line-height:1;padding:0;opacity:.7}
+.chip-x:hover{opacity:1}
+
+/* ══ DASHBOARD ══ */
+.dash-wrap{padding:20px}
+.dash-greeting{margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.dash-greeting h2{font-size:19px;font-weight:700}
+.dash-greeting p{font-size:13px;color:var(--text-muted);margin-top:3px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:2px;padding:16px 18px;position:relative;overflow:hidden;border-top:3px solid var(--border)}
+.kpi-card.clickable{cursor:pointer;transition:all .15s}
+.kpi-card.clickable:hover{box-shadow:0 4px 20px rgba(219,0,17,.1);transform:translateY(-2px)}
+.kpi-card.clickable:hover .kpi-val{color:var(--brand)}
+.kpi-card.c-red{border-top-color:var(--brand)}
+.kpi-card.c-warn{border-top-color:var(--warn)}
+.kpi-card.c-danger{border-top-color:#a80010}
+.kpi-card.c-success{border-top-color:var(--success)}
+.kpi-label{font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.kpi-val{font-size:32px;font-weight:700;color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:6px;display:flex;align-items:center;gap:4px}
+.kpi-delta{font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:2px}
+.kpi-delta.up{background:#eaf5ee;color:#166534}
+.kpi-delta.dn{background:var(--brand-light);color:#a80010}
+.kpi-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:26px;opacity:.07}
+.dash-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:14px;margin-bottom:20px}
+.dash-col{display:flex;flex-direction:column;gap:14px}
+.dash-card{background:#fff;border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.dash-card-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafafa}
+.dash-card-hdr h3{font-size:11.5px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.4px}
+.dash-card-hdr a{font-size:11.5px;color:var(--brand);text-decoration:none;font-weight:600}
+.dash-card-hdr a:hover{text-decoration:underline}
+.bar-chart{padding:12px 14px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.bar-row:last-child{margin-bottom:0}
+.bar-lbl{font-size:11.5px;color:var(--text-muted);width:80px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;background:#f5f5f5;border-radius:2px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.bar-val{font-size:11.5px;font-weight:700;color:var(--text);width:22px;text-align:right}
+.sparkline-wrap{padding:10px 14px 4px}
+.spark-labels{display:flex;justify-content:space-between;padding:0 14px 8px;font-size:10px;color:var(--text-light)}
+svg.spark{width:100%;height:56px;display:block}
+.dash-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.dash-table thead th{background:#fafafa;padding:6px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.dash-table tbody tr{border-bottom:1px solid #f5f5f5;cursor:pointer}
+.dash-table tbody tr:hover{background:var(--brand-light)}
+.dash-table tbody td{padding:7px 12px;vertical-align:middle}
+.wl-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f5f5f5}
+.wl-row:last-child{border-bottom:none}
+.wl-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700;color:#fff;flex-shrink:0}
+.wl-name{font-size:12px;font-weight:500;flex:1}
+.wl-bars{display:flex;gap:3px;align-items:center}
+.wl-dot{width:9px;height:9px;border-radius:2px}
+.sla-ring-wrap{display:flex;align-items:center;justify-content:space-around;gap:8px;padding:14px;flex-wrap:wrap}
+.ring-item{text-align:center;min-width:72px}
+.ring-item svg{width:64px;height:64px}
+.ring-item .ring-lbl{font-size:10px;color:var(--text-muted);margin-top:3px;font-weight:600}
+
+/* ══ MY TASKS ══ */
+.my-tasks-wrap{padding:20px}
+.my-tasks-hdr{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.my-tasks-hdr h2{font-size:17px;font-weight:700}
+.my-tasks-hdr p{font-size:12.5px;color:var(--text-muted);margin-top:3px}
+.mt-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.mt-kpi{background:#fff;border:1px solid var(--border);border-radius:2px;padding:12px 14px;text-align:center}
+.mt-kpi-val{font-size:24px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.mt-kpi-lbl{font-size:9.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-top:3px;font-weight:700}
+.mt-board{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.mt-col{background:#fff;border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.mt-col-hdr{padding:9px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;background:#fafafa}
+.mt-col-hdr .cpill{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:10px}
+.mt-task-card{padding:10px 12px;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .1s}
+.mt-task-card:last-child{border-bottom:none}
+.mt-task-card:hover{background:var(--brand-light)}
+.mt-tc-title{font-size:12.5px;font-weight:500;margin-bottom:4px;line-height:1.3}
+.mt-tc-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:3px}
+.mt-tc-case{font-size:10.5px;color:var(--brand);font-family:'IBM Plex Mono',monospace;font-weight:600}
+.hist-section{margin-top:20px}
+.hist-section-hdr{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.hist-section-hdr span{font-size:11.5px;color:var(--text-muted);font-weight:400}
+.hist-timeline{background:#fff;border:1px solid var(--border);border-radius:2px;overflow:hidden}
+.ht-entry{display:flex;gap:12px;padding:10px 14px;border-bottom:1px solid #f5f5f5}
+.ht-entry:last-child{border-bottom:none}
+.ht-dot{width:9px;height:9px;border-radius:50%;background:var(--success);flex-shrink:0;margin-top:4px}
+.ht-body{flex:1}
+.ht-title{font-size:12.5px;font-weight:500;color:var(--text-muted)}
+.ht-meta{font-size:11px;color:var(--text-light);display:flex;gap:8px;margin-top:2px;flex-wrap:wrap}
+.ht-right{text-align:right;font-size:11px;color:var(--text-muted);white-space:nowrap}
+.ht-dur{font-size:10px;color:var(--text-light);margin-top:2px}
+
+/* ══ CASE DETAIL ══ */
+.det-hdr{background:#fff;border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.det-hdr h2{font-size:14px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.det-tabs{display:flex;background:#fff;padding:0 20px;border-bottom:2px solid var(--border)}
+.det-tab{padding:9px 13px;font-size:12.5px;cursor:pointer;color:var(--text-muted);border-bottom:2px solid transparent;margin-bottom:-2px;font-weight:500;transition:all .12s;white-space:nowrap}
+.det-tab:hover{color:var(--brand)}
+.det-tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+.tc{display:none}
+.tc.active{display:block}
+.det-body{display:grid;grid-template-columns:1fr 295px}
+.det-main{padding:18px}
+.det-panel{background:#fafafa;border-left:1px solid var(--border);padding:14px}
+.fsec{background:#fff;border:1px solid var(--border);border-radius:2px;margin-bottom:14px;overflow:hidden}
+.fsec-hdr{background:#fafafa;padding:7px 14px;font-size:10.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.fgrid{display:grid;grid-template-columns:1fr 1fr}
+.ff{padding:9px 14px;border-bottom:1px solid #f5f5f5;border-right:1px solid #f5f5f5}
+.ff:nth-child(2n){border-right:none}
+.ff.fw{grid-column:1/-1;border-right:none}
+.ff label{display:block;font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.ff .val{font-size:13px;color:var(--text)}
+.ff .mono{font-family:'IBM Plex Mono',monospace;font-size:12px}
+.ff input,.ff select,.ff textarea{width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--border);border-radius:2px;padding:4px 8px;color:var(--text)}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--brand);outline:none}
+.ff textarea{resize:vertical;min-height:72px}
+.act-sec{background:#fff;border:1px solid var(--border);border-radius:2px}
+.act-entry{display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid #f5f5f5}
+.act-entry:last-child{border-bottom:none}
+.act-av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;color:#fff}
+.act-meta{display:flex;align-items:baseline;gap:7px;margin-bottom:2px}
+.act-who{font-weight:700;font-size:12px}
+.act-action{font-size:11.5px;color:var(--text-muted)}
+.act-when{font-size:10.5px;color:var(--text-light);margin-left:auto}
+.act-text{font-size:12.5px;line-height:1.5}
+.act-change{font-size:11px;color:var(--text-muted);background:#f9f9f9;padding:3px 7px;border-radius:2px;margin-top:3px;display:inline-block;border-left:3px solid var(--border)}
+.act-from{text-decoration:line-through;color:#aaa}
+.act-to{color:var(--success);font-weight:600}
+.cmt-box{padding:10px 14px;border-top:2px solid var(--border);background:#fafafa}
+.cmt-box textarea{width:100%;border:1px solid var(--border);border-radius:2px;padding:7px;font-family:inherit;font-size:12.5px;resize:none;height:62px}
+.cmt-foot{display:flex;justify-content:flex-end;margin-top:7px;gap:7px}
+.ps{margin-bottom:16px}
+.ps-title{font-size:9.5px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.pkv{display:flex;flex-direction:column;gap:6px}
+.pkv-r{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.pkv-r .k{font-size:11px;color:var(--text-muted)}
+.pkv-r .v{font-size:12px;color:var(--text);text-align:right}
+.sla-wrap{margin-top:3px}
+.sla-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-muted);margin-bottom:3px}
+.sla-bar{height:5px;background:#e5e5e5;border-radius:2px;overflow:hidden}
+.sla-fill{height:100%;border-radius:2px;background:var(--warn)}
+.sla-fill.ok{background:var(--success)}
+.info-banner{background:#fff8e6;border:1px solid #f5d87a;color:#7a4d00;padding:7px 12px;border-radius:2px;font-size:12px;display:flex;align-items:center;gap:7px;margin-bottom:12px}
+
+/* Task rows inside detail */
+.task-row{display:grid;grid-template-columns:30px 1fr auto;align-items:start;padding:10px 14px;border-bottom:1px solid #f5f5f5;gap:10px}
+.task-row:last-child{border-bottom:none}
+.tchk{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);cursor:pointer;display:grid;place-items:center;background:#fff;flex-shrink:0;transition:all .12s;margin-top:2px}
+.tchk.ip{border-color:var(--warn)}
+.tchk.ip::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--warn);display:block}
+.tchk.done{border-color:var(--success);background:var(--success)}
+.tchk.done::after{content:"✓";color:#fff;font-size:9px;font-weight:700}
+.t-title{font-size:13px;font-weight:500;margin-bottom:3px;line-height:1.3}
+.t-title.done-txt{text-decoration:line-through;color:var(--text-muted)}
+.t-meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:3px}
+.t-mi{font-size:11px;color:var(--text-muted)}
+.t-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:90px}
+.t-due{font-size:10.5px;white-space:nowrap}
+.t-due.ov{color:var(--brand);font-weight:700}
+.t-due.td{color:var(--warn);font-weight:600}
+.t-due.ok{color:var(--text-muted)}
+.hist-row{display:grid;grid-template-columns:28px 1fr auto;align-items:start;padding:10px 14px;border-bottom:1px solid #f5f5f5;gap:10px;opacity:.8}
+.hist-row:last-child{border-bottom:none}
+.hist-icon{width:24px;height:24px;border-radius:50%;background:#eaf5ee;display:grid;place-items:center;font-size:12px;flex-shrink:0;margin-top:1px}
+.hist-title{font-size:12.5px;font-weight:500;color:var(--text-muted);margin-bottom:3px}
+.hist-meta{font-size:11px;color:var(--text-light);display:flex;flex-wrap:wrap;gap:7px}
+.hist-r{text-align:right;min-width:82px}
+.hist-when{font-size:11px;color:var(--text-muted)}
+.hist-dur{font-size:10px;color:var(--text-light);margin-top:2px}
+
+/* ══ MODALS ══ */
+.mbk{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;place-items:center}
+.mbk.open{display:grid}
+.mbox{background:#fff;border-radius:2px;width:500px;max-width:96vw;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
+.mhdr{background:var(--brand);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.mhdr h3{font-size:13.5px;font-weight:700}
+.mhdr button{background:none;border:none;color:rgba(255,255,255,.8);cursor:pointer;font-size:18px;line-height:1}
+.mbody{padding:16px}
+.mf{margin-bottom:12px}
+.mf label{display:block;font-size:9.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.mf input,.mf select,.mf textarea{width:100%;font-family:inherit;font-size:12.5px;border:1px solid var(--border);border-radius:2px;padding:5px 9px;color:var(--text)}
+.mf input:focus,.mf select:focus,.mf textarea:focus{border-color:var(--brand);outline:none}
+.mf textarea{resize:vertical;height:64px}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mftr{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:#fafafa}
+
+/* ══ PAGINATION BUTTONS ══ */
+.pg-btn{font-family:inherit;font-size:13px;width:28px;height:28px;border:1px solid var(--border);background:#fff;border-radius:2px;cursor:pointer;color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;transition:all .12s;font-weight:500;line-height:1}
+.pg-btn:hover:not(:disabled){border-color:var(--brand);color:var(--brand);background:var(--brand-light)}
+.pg-btn:disabled{opacity:.35;cursor:default}
+.pg-btn.cur{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700}
+.pg-btn.pg-num{width:28px;font-size:12px}
+.pg-ellipsis{display:inline-flex;align-items:center;justify-content:center;width:22px;font-size:12px;color:var(--text-light)}
+
+@media(max-width:900px){
+  .det-body,.dash-row{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .mt-board{grid-template-columns:1fr}
+}
+@media(max-width:600px){.kpi-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<header class="hdr">
+  <button class="hdr-btn" onclick="toggleSidebar()">☰</button>
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="showView('dashboard')">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/HSBC%27s_Logo.svg" alt="HSBC" height="26" style="display:block"/>
+    <div class="hdr-sep"></div>
+    <span class="hdr-iqube">iQube</span>
+  </div>
+  <div class="hdr-sep"></div>
+  <span class="hdr-module" id="hdr-module">iQube — Dashboard</span>
+  <input type="search" class="hdr-search" placeholder="Search cases, tasks…"/>
+  <div class="hdr-notif">🔔<div class="hdr-notif-dot"></div></div>
+  <div class="hdr-avatar">BK</div>
+</header>
+
+<div class="layout">
+
+<!-- ════ SIDEBAR ════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-section">
+    <div class="sb-label">Overview</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('dashboard')" id="nav-dashboard" class="active"><span class="ni">📊 Dashboard</span></a></li>
+      <li><a href="#" onclick="showView('my-tasks')" id="nav-my-tasks"><span class="ni">✅ My Tasks</span><span class="sb-badge red">7</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Cases</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('list')" id="nav-list"><span class="ni">📋 All Cases</span><span class="sb-badge">142</span></a></li>
+      <li><a href="#" onclick="showView('list')"><span class="ni">🔵 Open</span><span class="sb-badge">58</span></a></li>
+      <li><a href="#" onclick="showView('list')"><span class="ni">👤 Assigned to Me</span><span class="sb-badge">12</span></a></li>
+      <li><a href="#" onclick="showView('list')"><span class="ni">⚠️ SLA Breaching</span><span class="sb-badge red">4</span></a></li>
+      <li><a href="#" onclick="showView('list')"><span class="ni">✅ Resolved Today</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Tasks</div>
+    <ul class="sb-nav">
+      <li><a href="#" onclick="showView('task-list')" id="nav-task-list"><span class="ni">📝 All Tasks</span><span class="sb-badge">38</span></a></li>
+      <li><a href="#" onclick="showView('task-list')"><span class="ni">🔵 Open Tasks</span><span class="sb-badge">22</span></a></li>
+      <li><a href="#" onclick="showView('task-list')"><span class="ni">👤 My Tasks</span><span class="sb-badge red">7</span></a></li>
+      <li><a href="#" onclick="showView('task-list')"><span class="ni">🔴 Overdue</span><span class="sb-badge red">2</span></a></li>
+    </ul>
+  </div>
+  <div class="sb-section">
+    <div class="sb-label">Configure</div>
+    <ul class="sb-nav">
+      <li><a href="#"><span class="ni">🏷️ Categories</span></a></li>
+      <li><a href="#"><span class="ni">👥 Teams</span></a></li>
+      <li><a href="#"><span class="ni">⚙️ Workflows</span></a></li>
+      <li><a href="#"><span class="ni">📈 Reports</span></a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="main" id="main-content">
+
+<!-- ════════════ DASHBOARD ════════════ -->
+<div id="view-dashboard" class="view active">
+<div class="dash-wrap">
+  <div class="dash-greeting">
+    <h2>Good morning, Bhushan 👋</h2>
+    <p>Sunday, 15 March 2026 · Here's what needs your attention today in <strong>iQube</strong>.</p>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card c-red clickable" onclick="showView('list')">
+      <div class="kpi-icon">📂</div>
+      <div class="kpi-label">Total Open Cases</div>
+      <div class="kpi-val">58</div>
+      <div class="kpi-sub"><span class="kpi-delta dn">+3</span> since yesterday</div>
+    </div>
+    <div class="kpi-card c-danger clickable" onclick="showView('list')">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-label">Critical / High Priority</div>
+      <div class="kpi-val">11</div>
+      <div class="kpi-sub"><span class="kpi-delta dn">+2</span> new today</div>
+    </div>
+    <div class="kpi-card c-warn clickable" onclick="showView('list')">
+      <div class="kpi-icon">⏱️</div>
+      <div class="kpi-label">SLA Breaching Soon</div>
+      <div class="kpi-val">4</div>
+      <div class="kpi-sub">Within next 2 hours</div>
+    </div>
+    <div class="kpi-card c-success clickable" onclick="showView('list')">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">Resolved Today</div>
+      <div class="kpi-val">17</div>
+      <div class="kpi-sub"><span class="kpi-delta up">+5</span> vs last week avg</div>
+    </div>
+  </div>
+  <div class="dash-row">
+    <div class="dash-col">
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Recent Cases</h3><a href="#" onclick="showView('list')">View all →</a></div>
+        <table class="dash-table"><thead><tr><th>Case #</th><th>Subject</th><th>Priority</th><th>State</th><th>Assigned To</th><th>Updated</th></tr></thead>
+        <tbody id="dash-recent-body"></tbody></table>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Case Volume — Last 7 Days</h3></div>
+        <div class="sparkline-wrap">
+          <svg class="spark" viewBox="0 0 400 56" preserveAspectRatio="none">
+            <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#DB0011" stop-opacity=".18"/>
+              <stop offset="100%" stop-color="#DB0011" stop-opacity="0"/>
+            </linearGradient></defs>
+            <polygon points="0,46 57,36 114,40 171,20 228,28 285,8 342,16 400,4 400,56 0,56" fill="url(#sg)"/>
+            <polyline points="0,46 57,36 114,40 171,20 228,28 285,8 342,16 400,4" fill="none" stroke="#DB0011" stroke-width="2.5" stroke-linejoin="round"/>
+            <circle cx="400" cy="4" r="4" fill="#DB0011"/>
+          </svg>
+        </div>
+        <div class="spark-labels"><span>9 Mar</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15 Mar</span></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Open Cases by Category</h3></div>
+        <div class="bar-chart" id="cat-bars"></div>
+      </div>
+    </div>
+    <div class="dash-col">
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>SLA Compliance (MTD)</h3></div>
+        <div class="sla-ring-wrap">
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="#e5e5e5" stroke-width="8"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="#1a7a4a" stroke-width="8" stroke-dasharray="149 176" stroke-dashoffset="44" stroke-linecap="round"/>
+            <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#333" font-family="IBM Plex Mono">85%</text></svg>
+            <div class="ring-lbl">Response SLA</div>
+          </div>
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="#e5e5e5" stroke-width="8"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="#b45300" stroke-width="8" stroke-dasharray="123 176" stroke-dashoffset="44" stroke-linecap="round"/>
+            <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#333" font-family="IBM Plex Mono">70%</text></svg>
+            <div class="ring-lbl">Resolution SLA</div>
+          </div>
+          <div class="ring-item">
+            <svg viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="#e5e5e5" stroke-width="8"/>
+            <circle cx="35" cy="35" r="28" fill="none" stroke="#1a7a4a" stroke-width="8" stroke-dasharray="158 176" stroke-dashoffset="44" stroke-linecap="round"/>
+            <text x="35" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="#333" font-family="IBM Plex Mono">90%</text></svg>
+            <div class="ring-lbl">CSAT Target</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>My Open Tasks</h3><a href="#" onclick="showView('my-tasks')">View all →</a></div>
+        <div id="dash-my-tasks-summary"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-hdr"><h3>Team Workload</h3></div>
+        <div id="team-workload"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════ MY TASKS (Custom HTML kanban) ════════════ -->
+<div id="view-my-tasks" class="view">
+  <div class="bc"><a href="#" onclick="showView('dashboard')">Dashboard</a><span class="bc-sep">›</span><span style="color:var(--text)">My Tasks</span></div>
+  <div class="my-tasks-wrap">
+    <div class="my-tasks-hdr">
+      <h2>My Tasks</h2>
+      <p>All tasks assigned to you across open cases · Today is <strong>15 Mar 2026</strong></p>
+    </div>
+    <div class="mt-kpi-row">
+      <div class="mt-kpi"><div class="mt-kpi-val" style="color:#DB0011">7</div><div class="mt-kpi-lbl">Open</div></div>
+      <div class="mt-kpi"><div class="mt-kpi-val" style="color:#b45300">3</div><div class="mt-kpi-lbl">In Progress</div></div>
+      <div class="mt-kpi"><div class="mt-kpi-val" style="color:#a80010">2</div><div class="mt-kpi-lbl">Overdue</div></div>
+      <div class="mt-kpi"><div class="mt-kpi-val" style="color:#1a7a4a">24</div><div class="mt-kpi-lbl">Completed (30d)</div></div>
+    </div>
+    <div class="mt-board" id="mt-board"></div>
+    <div class="hist-section">
+      <div class="hist-section-hdr">Task History <span>Completed tasks in the last 30 days</span></div>
+      <div class="hist-timeline" id="my-hist-timeline"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CASE LIST — AG Grid ════════════ -->
+<div id="view-list" class="view">
+  <div class="bc"><a href="#" onclick="showView('dashboard')">Dashboard</a><span class="bc-sep">›</span><span style="color:var(--text)">All Cases</span></div>
+  <div class="page-bar">
+    <h2>All Cases</h2><span class="cnt-badge" id="case-grid-cnt">142</span>
+    <div class="spacer"></div>
+    <div class="toolbar-row">
+      <input type="text" placeholder="🔍 Quick search…" oninput="caseQuickSearch(this.value)"
+        style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:2px;width:180px"/>
+      <button class="filter-toggle-btn" id="case-fp-btn" onclick="toggleFP('case-fp','case-fp-btn')">
+        ⚙ Filters <span class="filter-cnt" id="case-fp-cnt" style="display:none">0</span>
+      </button>
+      <button class="btn btn-ghost" id="bulk-assign-btn" style="display:none" onclick="alert('Bulk assign selected cases')">Assign Selected</button>
+      <button class="btn btn-ghost" id="bulk-close-btn" style="display:none" onclick="alert('Bulk close selected cases')">Close Selected</button>
+      <button class="btn btn-primary" onclick="openNewCaseModal()">+ New Case</button>
+    </div>
+  </div>
+  <!-- Collapsible filter panel -->
+  <div class="filter-panel" id="case-fp">
+    <div class="fp-inner">
+      <div class="fp-field"><span class="fp-label">State</span>
+        <select class="fp-select" id="cf-state" onchange="applyCaseFilters()">
+          <option value="">All States</option><option>New</option><option>In Progress</option><option>Pending</option><option>Resolved</option><option>Closed</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Priority</span>
+        <select class="fp-select" id="cf-pri" onchange="applyCaseFilters()">
+          <option value="">All Priorities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Type</span>
+        <select class="fp-select" id="cf-type" onchange="applyCaseFilters()">
+          <option value="">All Types</option><option>Service Request</option><option>Complaint</option><option>Inquiry</option><option>Incident</option><option>Change</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Assigned To</span>
+        <select class="fp-select" id="cf-assign" onchange="applyCaseFilters()">
+          <option value="">All Assignees</option><option>Rahul Mehta</option><option>Sanjay Patel</option><option>Bhushan Kadam</option><option>Divya Thomas</option><option>Kiran Singh</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label" style="color:transparent">x</span>
+        <button onclick="clearCaseFilters()" style="font-family:inherit;font-size:11.5px;padding:5px 10px;border:1px solid var(--border);border-radius:2px;background:#fff;cursor:pointer;color:var(--text-muted)">✕ Clear all</button>
+      </div>
+    </div>
+  </div>
+  <!-- Active chips -->
+  <div class="active-chips" id="case-chips"></div>
+  <!-- AG Grid -->
+  <div class="grid-container">
+    <div id="case-grid" class="ag-theme-alpine ag-wrap" style="height:520px;width:100%"></div>
+    <div class="grid-status">
+      <!-- Left: count + selection + bulk actions -->
+      <span id="case-row-info" style="font-size:12px;color:var(--text-muted)">142 cases</span>
+      <span class="sel-info" id="case-sel-info" style="display:none"></span>
+      <div class="bulk-actions" id="case-bulk-actions">
+        <button class="btn btn-ghost" style="font-size:11.5px;padding:3px 10px" onclick="alert('Assign')">Assign</button>
+        <button class="btn btn-ghost" style="font-size:11.5px;padding:3px 10px" onclick="alert('Export')">Export CSV</button>
+        <button class="btn btn-ghost" style="font-size:11.5px;padding:3px 10px;color:var(--brand);border-color:var(--brand)" onclick="clearCaseSelection()">✕ Clear</button>
+      </div>
+      <!-- Right: page size + pager -->
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">
+          <span>Rows per page:</span>
+          <select id="case-page-size" onchange="setCasePageSize(+this.value)" style="font-family:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--border);border-radius:2px;background:#fff;cursor:pointer">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <span id="case-pg-info" style="font-size:12px;color:var(--text-muted);white-space:nowrap">1–20 of 142</span>
+        <div style="display:flex;align-items:center;gap:2px">
+          <button class="pg-btn" id="case-pg-first"  onclick="casePgNav('first')"  title="First page">«</button>
+          <button class="pg-btn" id="case-pg-prev"   onclick="casePgNav('prev')"   title="Previous page">‹</button>
+          <span id="case-pg-pages" style="display:flex;gap:2px"></span>
+          <button class="pg-btn" id="case-pg-next"   onclick="casePgNav('next')"   title="Next page">›</button>
+          <button class="pg-btn" id="case-pg-last"   onclick="casePgNav('last')"   title="Last page">»</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ TASK LIST — AG Grid ════════════ -->
+<div id="view-task-list" class="view">
+  <div class="bc"><a href="#" onclick="showView('dashboard')">Dashboard</a><span class="bc-sep">›</span><span style="color:var(--text)">All Tasks</span></div>
+  <div class="page-bar">
+    <h2>All Tasks</h2><span class="cnt-badge" id="task-grid-cnt">38</span>
+    <div class="spacer"></div>
+    <div class="toolbar-row">
+      <input type="text" placeholder="🔍 Quick search…" oninput="taskQuickSearch(this.value)"
+        style="font-family:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--border);border-radius:2px;width:180px"/>
+      <button class="filter-toggle-btn" id="task-fp-btn" onclick="toggleFP('task-fp','task-fp-btn')">
+        ⚙ Filters <span class="filter-cnt" id="task-fp-cnt" style="display:none">0</span>
+      </button>
+      <button class="btn btn-primary" onclick="openTaskModal()">+ New Task</button>
+    </div>
+  </div>
+  <!-- Collapsible filter panel -->
+  <div class="filter-panel" id="task-fp">
+    <div class="fp-inner">
+      <div class="fp-field"><span class="fp-label">Status</span>
+        <select class="fp-select" id="tf-status" onchange="applyTaskFilters()">
+          <option value="">All Statuses</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="done">Done</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Type</span>
+        <select class="fp-select" id="tf-type" onchange="applyTaskFilters()">
+          <option value="">All Types</option><option value="investigate">Investigate</option><option value="remediate">Remediate</option>
+          <option value="communicate">Communicate</option><option value="verify">Verify</option><option value="escalate">Escalate</option>
+          <option value="document">Document</option><option value="review">Review</option><option value="action">Action Item</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Priority</span>
+        <select class="fp-select" id="tf-pri" onchange="applyTaskFilters()">
+          <option value="">All Priorities</option><option>High</option><option>Medium</option><option>Low</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label">Assigned To</span>
+        <select class="fp-select" id="tf-assign" onchange="applyTaskFilters()">
+          <option value="">All Assignees</option><option>Bhushan Kadam</option><option>Rahul Mehta</option><option>Priya Sharma</option><option>Sanjay Patel</option>
+        </select>
+      </div>
+      <div class="fp-field"><span class="fp-label" style="color:transparent">x</span>
+        <button onclick="clearTaskFilters()" style="font-family:inherit;font-size:11.5px;padding:5px 10px;border:1px solid var(--border);border-radius:2px;background:#fff;cursor:pointer;color:var(--text-muted)">✕ Clear all</button>
+      </div>
+    </div>
+  </div>
+  <!-- Active chips -->
+  <div class="active-chips" id="task-chips"></div>
+  <!-- AG Grid -->
+  <div class="grid-container">
+    <div id="task-grid" class="ag-theme-alpine ag-wrap" style="height:520px;width:100%"></div>
+    <div class="grid-status">
+      <span id="task-row-info" style="font-size:12px;color:var(--text-muted)">38 tasks</span>
+      <span class="sel-info" id="task-sel-info" style="display:none"></span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)">
+          <span>Rows per page:</span>
+          <select id="task-page-size" onchange="setTaskPageSize(+this.value)" style="font-family:inherit;font-size:12px;padding:2px 6px;border:1px solid var(--border);border-radius:2px;background:#fff;cursor:pointer">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <span id="task-pg-info" style="font-size:12px;color:var(--text-muted);white-space:nowrap">1–20 of 28</span>
+        <div style="display:flex;align-items:center;gap:2px">
+          <button class="pg-btn" id="task-pg-first"  onclick="taskPgNav('first')"  title="First page">«</button>
+          <button class="pg-btn" id="task-pg-prev"   onclick="taskPgNav('prev')"   title="Previous page">‹</button>
+          <span id="task-pg-pages" style="display:flex;gap:2px"></span>
+          <button class="pg-btn" id="task-pg-next"   onclick="taskPgNav('next')"   title="Next page">›</button>
+          <button class="pg-btn" id="task-pg-last"   onclick="taskPgNav('last')"   title="Last page">»</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CASE DETAIL (custom HTML) ════════════ -->
+<div id="view-detail" class="view">
+  <div class="bc">
+    <a href="#" onclick="showView('list')">Cases</a><span class="bc-sep">›</span>
+    <span id="det-bc-num" style="color:var(--text)">CASE-1042</span>
+  </div>
+  <div class="det-hdr">
+    <button class="btn btn-ghost" onclick="showView('list')">← Back</button>
+    <h2 id="det-num">CASE-1042</h2>
+    <span id="det-state-badge"></span>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-ghost">Assign to Me</button>
+      <button class="btn btn-ghost">Put on Hold</button>
+      <button class="btn btn-ghost">Escalate</button>
+      <button class="btn btn-success">Resolve</button>
+    </div>
+  </div>
+  <div class="det-tabs">
+    <div class="det-tab active" onclick="switchTab(this,'tc-details')">Details</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-activity')">Activity</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-tasks')">Tasks <span style="background:var(--brand);color:#fff;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:3px">3</span></div>
+    <div class="det-tab" onclick="switchTab(this,'tc-related')">Related</div>
+    <div class="det-tab" onclick="switchTab(this,'tc-approvals')">Approvals</div>
+  </div>
+  <div class="det-body">
+    <div class="det-main">
+      <div id="tc-details" class="tc active">
+        <div class="info-banner">ℹ️ Resolution SLA due in <strong>2h 14m</strong>. Breach imminent.</div>
+        <div class="fsec"><div class="fsec-hdr">Case Information</div>
+          <div class="fgrid">
+            <div class="ff"><label>Case Number</label><div class="val mono" id="det-case-num">CASE-1042</div></div>
+            <div class="ff"><label>State</label><select><option>In Progress</option><option>New</option><option>Pending</option><option>Resolved</option><option>Closed</option></select></div>
+            <div class="ff"><label>Case Type</label><select><option selected>Incident</option><option>Service Request</option><option>Complaint</option><option>Inquiry</option><option>Change</option></select></div>
+            <div class="ff"><label>Priority</label><select><option selected>High</option><option>Critical</option><option>Medium</option><option>Low</option></select></div>
+            <div class="ff"><label>Impact</label><select><option selected>Medium</option><option>High</option><option>Low</option></select></div>
+            <div class="ff"><label>Urgency</label><select><option selected>High</option><option>Medium</option><option>Low</option></select></div>
+            <div class="ff"><label>Category</label><select><option selected>Network</option><option>Software</option><option>Hardware</option><option>Security</option></select></div>
+            <div class="ff"><label>Subcategory</label><select><option selected>Connectivity</option><option>VPN</option><option>DNS</option></select></div>
+            <div class="ff fw"><label>Subject</label><input type="text" id="det-subject" value="VPN connectivity failure — Singapore office users unable to connect"/></div>
+            <div class="ff fw"><label>Description</label><textarea>Approximately 45 users in the Singapore office are unable to establish VPN connections since 09:15 SGT. Users receive error code 789. Suspected issue with VPN concentrator or upstream gateway.</textarea></div>
+          </div>
+        </div>
+        <div class="fsec"><div class="fsec-hdr">Assignment</div>
+          <div class="fgrid">
+            <div class="ff"><label>Assignment Group</label><select><option selected>Network Operations</option><option>Infra L2</option><option>Security Ops</option></select></div>
+            <div class="ff"><label>Assigned To</label><input type="text" value="Rahul Mehta"/></div>
+            <div class="ff"><label>Requester</label><input type="text" value="Priya Sharma"/></div>
+            <div class="ff"><label>Location</label><div class="val">Singapore — SG-HQ</div></div>
+          </div>
+        </div>
+        <div class="fsec"><div class="fsec-hdr">Resolution</div>
+          <div class="fgrid">
+            <div class="ff"><label>Resolution Code</label><select><option>— Select —</option><option>Solved (Permanently)</option><option>Solved (Work Around)</option></select></div>
+            <div class="ff"><label>Resolved By</label><input type="text" placeholder="Resolver name"/></div>
+            <div class="ff fw"><label>Resolution Notes</label><textarea placeholder="Document resolution steps…"></textarea></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:4px">
+          <button class="btn btn-primary">Save</button>
+          <button class="btn btn-ghost">Update</button>
+        </div>
+      </div>
+      <div id="tc-activity" class="tc">
+        <div class="act-sec">
+          <div class="act-entry"><div class="act-av" style="background:#1a7a4a">RM</div>
+            <div><div class="act-meta"><span class="act-who">Rahul Mehta</span><span class="act-action">added work note</span><span class="act-when">14 Mar, 11:42</span></div>
+            <div class="act-text">Escalated to L2 Network Ops. VPN concentrator SG-VPN-01 CPU at 98%. Initiated restart per runbook NW-042.</div></div>
+          </div>
+          <div class="act-entry"><div class="act-av" style="background:#b45300">PS</div>
+            <div><div class="act-meta"><span class="act-who">Priya Sharma</span><span class="act-action">updated fields</span><span class="act-when">14 Mar, 10:58</span></div>
+            <div class="act-change">State: <span class="act-from">New</span> → <span class="act-to">In Progress</span></div>
+            <div class="act-change" style="margin-top:3px">Assigned To: <span class="act-from">Unassigned</span> → <span class="act-to">Rahul Mehta</span></div></div>
+          </div>
+          <div class="act-entry"><div class="act-av" style="background:#5b21b6">SB</div>
+            <div><div class="act-meta"><span class="act-who">System Bot</span><span class="act-action">auto-routed to group</span><span class="act-when">14 Mar, 10:21</span></div>
+            <div class="act-change">Assignment Group: <span class="act-from">—</span> → <span class="act-to">Network Operations</span></div></div>
+          </div>
+          <div class="act-entry"><div class="act-av" style="background:#1B3A5C">PS</div>
+            <div><div class="act-meta"><span class="act-who">Priya Sharma</span><span class="act-action">created case</span><span class="act-when">14 Mar, 09:22</span></div>
+            <div class="act-text">~45 users affected. Business impact: High — trading operations disrupted.</div></div>
+          </div>
+          <div class="cmt-box">
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Add Work Note</div>
+            <textarea placeholder="Type your note…"></textarea>
+            <div class="cmt-foot"><button class="btn btn-ghost">Cancel</button><button class="btn btn-primary">Post Note</button></div>
+          </div>
+        </div>
+      </div>
+      <div id="tc-tasks" class="tc">
+        <div class="fsec">
+          <div class="fsec-hdr">Current Tasks <span style="background:var(--warn);color:#fff;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px">3 Open</span>
+            <button class="btn btn-primary" style="font-size:11px;padding:3px 9px" onclick="openTaskModal()">+ Add Task</button>
+          </div>
+          <div id="det-current-tasks"></div>
+        </div>
+        <div class="fsec" style="margin-top:12px">
+          <div class="fsec-hdr">Task History <span style="background:#e5e5e5;color:#666;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:5px">5 Completed</span></div>
+          <div id="det-hist-tasks"></div>
+        </div>
+      </div>
+      <div id="tc-related" class="tc">
+        <div class="fsec"><div class="fsec-hdr">Related Cases</div>
+          <table><thead><tr><th>Case #</th><th>Subject</th><th>Type</th><th>State</th><th>Created</th></tr></thead>
+          <tbody><tr><td><span class="cell-case-num">CASE-1038</span></td><td>Recurring network instability — SG region</td><td><span class="tp tp-investigate">Incident</span></td><td><span class="st st-progress">In Progress</span></td><td style="font-size:11.5px;color:var(--text-light)">10 Mar 2026</td></tr></tbody></table>
+        </div>
+        <div class="fsec" style="margin-top:12px"><div class="fsec-hdr">Linked Change Requests</div>
+          <table><thead><tr><th>Case #</th><th>Subject</th><th>State</th><th>Scheduled</th></tr></thead>
+          <tbody><tr><td><span class="cell-case-num">CASE-CR-198</span></td><td>VPN concentrator firmware upgrade</td><td><span class="st st-pending">Pending Approval</span></td><td style="font-size:11.5px;color:var(--text-light)">15 Mar 2026</td></tr></tbody></table>
+        </div>
+      </div>
+      <div id="tc-approvals" class="tc">
+        <div class="fsec"><div class="fsec-hdr">Approval Records</div>
+          <table><thead><tr><th>Approver</th><th>Role</th><th>State</th><th>Due</th><th>Comments</th></tr></thead>
+          <tbody><tr><td>Ankit Bhatt</td><td>Change Manager</td><td><span class="st st-pending">Requested</span></td><td style="font-size:11.5px;color:var(--text-light)">15 Mar 2026</td><td>—</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="det-panel">
+      <div class="ps"><div class="ps-title">SLA Status</div>
+        <div class="sla-wrap"><div class="sla-lbl"><span>Response SLA</span><span style="color:var(--success);font-weight:600">Met ✓</span></div><div class="sla-bar"><div class="sla-fill ok" style="width:100%"></div></div></div>
+        <div class="sla-wrap" style="margin-top:8px"><div class="sla-lbl"><span>Resolution SLA</span><span style="color:var(--warn);font-weight:600">2h 14m left</span></div><div class="sla-bar"><div class="sla-fill" style="width:72%"></div></div></div>
+      </div>
+      <div class="ps"><div class="ps-title">Dates &amp; Times</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Opened</span><span class="v">14 Mar 2026, 09:22</span></div>
+          <div class="pkv-r"><span class="k">Last updated</span><span class="v">14 Mar 2026, 11:42</span></div>
+          <div class="pkv-r"><span class="k">Response due</span><span class="v" style="color:var(--success)">Completed</span></div>
+          <div class="pkv-r"><span class="k">Resolution due</span><span class="v" style="color:var(--warn)">14 Mar, 14:00</span></div>
+        </div>
+      </div>
+      <div class="ps"><div class="ps-title">Configuration Item</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">CI</span><span class="v" style="color:var(--brand)">SG-VPN-01</span></div>
+          <div class="pkv-r"><span class="k">Type</span><span class="v">Network Device</span></div>
+          <div class="pkv-r"><span class="k">Environment</span><span class="v">Production</span></div>
+          <div class="pkv-r"><span class="k">Location</span><span class="v">Singapore DC</span></div>
+        </div>
+      </div>
+      <div class="ps"><div class="ps-title">Contact</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Requester</span><span class="v">Priya Sharma</span></div>
+          <div class="pkv-r"><span class="k">Dept</span><span class="v">Trading Ops</span></div>
+          <div class="pkv-r"><span class="k">Phone</span><span class="v">+65 9182 xxxx</span></div>
+        </div>
+      </div>
+      <div class="ps"><div class="ps-title">Watchers</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <div style="background:var(--brand);color:#fff;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700" title="Priya Sharma">PS</div>
+          <div style="background:#1a7a4a;color:#fff;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700" title="Rahul Mehta">RM</div>
+          <div style="background:#b45300;color:#fff;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700" title="Ankit Bhatt">AB</div>
+          <div style="background:#ccc;color:#fff;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;cursor:pointer">+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ TASK DETAIL ════════════ -->
+<div id="view-task-detail" class="view">
+  <div class="bc">
+    <a href="#" onclick="showView('task-list')">Tasks</a>
+    <span class="bc-sep">›</span>
+    <span id="td-bc-num" style="color:var(--text)">TASK-001</span>
+  </div>
+  <div class="det-hdr">
+    <button class="btn btn-ghost" onclick="showView('task-list')">← Back</button>
+    <h2 id="td-num" style="font-family:'IBM Plex Mono',monospace;font-size:13.5px">TASK-001</h2>
+    <span id="td-status-badge"></span>
+    <div class="spacer"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="alert('Reassign')">Reassign</button>
+      <button class="btn btn-ghost" onclick="alert('Put on Hold')">Put on Hold</button>
+      <button class="btn btn-success" id="td-resolve-btn" onclick="markTaskDone()">Mark Done</button>
+    </div>
+  </div>
+  <div class="det-tabs">
+    <div class="det-tab active" onclick="switchTab(this,'tt-details')">Details</div>
+    <div class="det-tab" onclick="switchTab(this,'tt-activity')">Activity</div>
+    <div class="det-tab" onclick="switchTab(this,'tt-subtasks')">Subtasks <span id="td-sub-badge" style="background:var(--brand);color:#fff;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:10px;margin-left:3px"></span></div>
+    <div class="det-tab" onclick="switchTab(this,'tt-related')">Related Case</div>
+  </div>
+  <div class="det-body">
+    <div class="det-main">
+
+      <!-- Details tab -->
+      <div id="tt-details" class="tc active">
+        <div class="fsec">
+          <div class="fsec-hdr">Task Information</div>
+          <div class="fgrid">
+            <div class="ff"><label>Task ID</label><div class="val mono" id="td-task-id">TASK-001</div></div>
+            <div class="ff"><label>Status</label><select id="td-status-sel"><option value="open">Open</option><option value="in-progress">In Progress</option><option value="done">Done</option></select></div>
+            <div class="ff"><label>Type</label><select id="td-type-sel"><option value="investigate">Investigate</option><option value="remediate">Remediate</option><option value="communicate">Communicate</option><option value="verify">Verify</option><option value="escalate">Escalate</option><option value="document">Document</option><option value="review">Review</option><option value="action">Action Item</option></select></div>
+            <div class="ff"><label>Priority</label><select id="td-priority-sel"><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></div>
+            <div class="ff"><label>Assigned To</label><input type="text" id="td-assignee-inp"/></div>
+            <div class="ff"><label>Assignment Group</label><input type="text" id="td-group-inp"/></div>
+            <div class="ff"><label>Due Date</label><input type="date" id="td-due-inp"/></div>
+            <div class="ff"><label>Parent Case</label><div class="val"><a id="td-case-link" class="cell-case-num" href="#" onclick="event.preventDefault();tdGoToCase()"></a></div></div>
+            <div class="ff fw"><label>Title</label><input type="text" id="td-title-inp"/></div>
+            <div class="ff fw"><label>Description</label><textarea id="td-desc-inp" style="min-height:90px"></textarea></div>
+          </div>
+        </div>
+        <div class="fsec">
+          <div class="fsec-hdr">Completion</div>
+          <div class="fgrid">
+            <div class="ff fw"><label>Completion Notes</label><textarea id="td-completion-notes" placeholder="Document what was done, findings, or resolution steps…" style="min-height:72px"></textarea></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:7px;margin-top:4px">
+          <button class="btn btn-primary" onclick="saveTaskDetail()">Save</button>
+          <button class="btn btn-ghost" onclick="showView('task-list')">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Activity tab -->
+      <div id="tt-activity" class="tc">
+        <div class="act-sec" id="td-activity-list"></div>
+      </div>
+
+      <!-- Subtasks tab -->
+      <div id="tt-subtasks" class="tc">
+        <div class="fsec">
+          <div class="fsec-hdr">
+            Subtasks
+            <button class="btn btn-primary" style="font-size:11px;padding:3px 9px" onclick="addSubtask()">+ Add</button>
+          </div>
+          <div id="td-subtasks-list"></div>
+        </div>
+      </div>
+
+      <!-- Related Case tab -->
+      <div id="tt-related" class="tc">
+        <div class="fsec">
+          <div class="fsec-hdr">Parent Case</div>
+          <div id="td-related-case-info" style="padding:16px"></div>
+        </div>
+        <div class="fsec" style="margin-top:12px">
+          <div class="fsec-hdr">Sibling Tasks <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">Other tasks on the same case</span></div>
+          <div id="td-sibling-tasks"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Side panel -->
+    <div class="det-panel">
+      <div class="ps">
+        <div class="ps-title">Due Date</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Due</span><span class="v" id="td-panel-due"></span></div>
+          <div class="pkv-r"><span class="k">Created</span><span class="v" id="td-panel-created"></span></div>
+          <div class="pkv-r"><span class="k">Last updated</span><span class="v" id="td-panel-updated"></span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Assignment</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Assignee</span><span class="v" id="td-panel-assignee"></span></div>
+          <div class="pkv-r"><span class="k">Group</span><span class="v" id="td-panel-group"></span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Parent Case</div>
+        <div class="pkv">
+          <div class="pkv-r"><span class="k">Case #</span><span class="v"><a id="td-panel-case" class="cell-case-num" href="#" onclick="event.preventDefault();tdGoToCase()"></a></span></div>
+          <div class="pkv-r"><span class="k">State</span><span class="v" id="td-panel-case-state"></span></div>
+          <div class="pkv-r"><span class="k">Priority</span><span class="v" id="td-panel-case-pri"></span></div>
+        </div>
+      </div>
+      <div class="ps">
+        <div class="ps-title">Progress</div>
+        <div style="margin-top:4px">
+          <div id="td-panel-subtask-progress" style="font-size:12px;color:var(--text-muted);margin-bottom:6px"></div>
+          <div class="sla-bar"><div id="td-panel-progress-bar" class="sla-fill ok" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- TASK MODAL -->
+<div class="mbk" id="task-modal">
+  <div class="mbox">
+    <div class="mhdr"><h3>Add Task</h3><button onclick="closeTaskModal()">×</button></div>
+    <div class="mbody">
+      <div class="mf"><label>Task Title *</label><input type="text" id="mt-title" placeholder="Brief description"/></div>
+      <div class="mrow">
+        <div class="mf"><label>Type</label><select id="mt-type"><option value="investigate">Investigate</option><option value="remediate">Remediate</option><option value="communicate">Communicate</option><option value="verify">Verify</option><option value="escalate">Escalate</option><option value="document">Document</option><option value="review">Review</option><option value="action">Action Item</option></select></div>
+        <div class="mf"><label>Priority</label><select id="mt-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+      </div>
+      <div class="mrow">
+        <div class="mf"><label>Assigned To</label><input type="text" id="mt-assignee" placeholder="Name or group"/></div>
+        <div class="mf"><label>Due Date</label><input type="date" id="mt-due" value="2026-03-15"/></div>
+      </div>
+      <div class="mf"><label>Description</label><textarea id="mt-desc" placeholder="Steps, context, acceptance criteria…"></textarea></div>
+    </div>
+    <div class="mftr"><button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button><button class="btn btn-primary" onclick="addTask()">Create Task</button></div>
+  </div>
+</div>
+
+<!-- NEW CASE MODAL -->
+<div class="mbk" id="case-modal">
+  <div class="mbox">
+    <div class="mhdr"><h3>New Case — iQube</h3><button onclick="closeCaseModal()">×</button></div>
+    <div class="mbody">
+      <div class="mf"><label>Subject *</label><input type="text" id="nc-subject" placeholder="Brief summary"/></div>
+      <div class="mrow">
+        <div class="mf"><label>Type</label><select id="nc-type"><option>Service Request</option><option>Complaint</option><option>Incident</option><option>Inquiry</option><option>Change</option></select></div>
+        <div class="mf"><label>Priority</label><select id="nc-priority"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+      </div>
+      <div class="mrow">
+        <div class="mf"><label>Category</label><select id="nc-cat"><option>Network</option><option>Software</option><option>Hardware</option><option>Security</option><option>HR</option><option>Finance</option><option>Facilities</option></select></div>
+        <div class="mf"><label>Requester</label><input type="text" id="nc-req" placeholder="Name"/></div>
+      </div>
+      <div class="mf"><label>Description</label><textarea id="nc-desc" placeholder="Detailed description…"></textarea></div>
+    </div>
+    <div class="mftr"><button class="btn btn-ghost" onclick="closeCaseModal()">Cancel</button><button class="btn btn-primary" onclick="addCase()">Create Case</button></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const cases = [
+  {num:"CASE-1042",type:"Incident",  pri:"High",    state:"progress",subject:"VPN connectivity failure — Singapore office",        requester:"Priya Sharma", assigned:"Rahul Mehta",  cat:"Network",    created:"14 Mar 2026",updated:"14 Mar, 11:42"},
+  {num:"CASE-1041",type:"Incident",  pri:"Critical",state:"new",     subject:"Production database unresponsive — Core Banking",    requester:"Arun Nair",    assigned:"Sanjay Patel", cat:"Database",   created:"14 Mar 2026",updated:"14 Mar, 10:55"},
+  {num:"CASE-1040",type:"Service Request",pri:"Medium",state:"resolved",subject:"Email delivery delays — SMTP relay latency",     requester:"Meena Rao",    assigned:"Divya Thomas", cat:"Email",      created:"13 Mar 2026",updated:"14 Mar, 09:10"},
+  {num:"CASE-1039",type:"Complaint", pri:"High",    state:"pending", subject:"MFA not triggering — HSBC Direct portal",           requester:"Rohit Gupta",  assigned:"Kiran Singh",  cat:"Security",   created:"13 Mar 2026",updated:"13 Mar, 18:32"},
+  {num:"CASE-1038",type:"Incident",  pri:"Low",     state:"closed",  subject:"Printer offline — Floor 4, Mumbai HO",              requester:"Sunita Desai", assigned:"Help Desk L1", cat:"Hardware",   created:"13 Mar 2026",updated:"13 Mar, 16:00"},
+  {num:"CASE-1037",type:"Incident",  pri:"Critical",state:"progress",subject:"Payment gateway timeout — SWIFT integration",        requester:"Vikram Joshi", assigned:"Amit Kumar",   cat:"Integration",created:"13 Mar 2026",updated:"13 Mar, 15:45"},
+  {num:"CASE-1036",type:"Inquiry",   pri:"Medium",  state:"new",     subject:"Slow response on trade portal — latency > 5s",      requester:"Neha Kulkarni",assigned:"Infra L2",     cat:"Performance",created:"13 Mar 2026",updated:"13 Mar, 14:20"},
+  {num:"CASE-1035",type:"Incident",  pri:"High",    state:"progress",subject:"Certificate expiry warning — API gateway prod",      requester:"Suresh Iyer",  assigned:"Pradeep Nair", cat:"Security",   created:"12 Mar 2026",updated:"13 Mar, 12:00"},
+  {num:"CASE-1034",type:"Incident",  pri:"Medium",  state:"resolved",subject:"Kafka consumer lag spike on transaction events",     requester:"Ravi Krishnan",assigned:"Bhushan Kadam",cat:"Middleware", created:"12 Mar 2026",updated:"12 Mar, 22:10"},
+  {num:"CASE-1033",type:"Service Request",pri:"Low",state:"closed",  subject:"Broken link on intranet HR portal",                 requester:"Pooja Mehta",  assigned:"Web Team",     cat:"Software",   created:"11 Mar 2026",updated:"12 Mar, 09:00"},
+  {num:"CASE-1032",type:"Change",    pri:"High",    state:"pending", subject:"GKE node pool autoscaler not triggering — Prod",    requester:"Ankit Sharma", assigned:"Cloud Ops",    cat:"Cloud/Infra",created:"11 Mar 2026",updated:"11 Mar, 19:15"},
+  {num:"CASE-1031",type:"Incident",  pri:"Critical",state:"resolved",subject:"Critical data sync failure — GL reconciliation",    requester:"Finance IT",   assigned:"Sanjay Patel", cat:"Database",   created:"11 Mar 2026",updated:"11 Mar, 17:00"},
+  {num:"CASE-1030",type:"Incident",  pri:"Medium",  state:"new",     subject:"Solace message broker — topic subscription drop",   requester:"Ravi Krishnan",assigned:"Middleware Ops",cat:"Middleware", created:"10 Mar 2026",updated:"10 Mar, 16:30"},
+  {num:"CASE-1029",type:"Service Request",pri:"Low",state:"closed",  subject:"Conference room display not working — BKC L3",     requester:"Admin Desk",   assigned:"Help Desk L1", cat:"Hardware",   created:"10 Mar 2026",updated:"10 Mar, 15:00"},
+  {num:"CASE-1028",type:"Incident",  pri:"High",    state:"progress",subject:"Redis cache eviction causing session drops — iQube", requester:"Dev Team",     assigned:"Bhushan Kadam",cat:"Application",created:"09 Mar 2026",updated:"10 Mar, 11:22"},
+];
+
+// ═══════════════════════════════════════════════════
+// CASE DETAIL TASKS DATA
+// ═══════════════════════════════════════════════════
+const detTasks = [
+  {id:"TASK-001",type:"investigate",title:"Identify root cause of SG-VPN-01 CPU spike",desc:"Review syslog, SNMP traps and traffic graphs. Correlate spike onset time with any config change.",assignee:"Rahul Mehta",group:"Network Ops",priority:"High",due:"2026-03-14",status:"in-progress",created:"14 Mar, 09:30",subtasks:["Pull syslog 08:00–10:00 SGT","Check SNMP CPU graph","Verify no change tickets"]},
+  {id:"TASK-002",type:"communicate",title:"Send business impact notification to Trading Ops leadership",desc:"Prepare and send status comms to Trading Ops VP and BCP team with scope, status and ETA.",assignee:"Priya Sharma",group:"Service Desk",priority:"High",due:"2026-03-14",status:"open",created:"14 Mar, 09:45",subtasks:["Draft email to VP Trading Ops","CC BCP team","Schedule 30-min update call"]},
+  {id:"TASK-003",type:"remediate",title:"Apply hotfix / restart VPN concentrator per runbook NW-042",desc:"Follow NW-042 runbook for controlled restart of SG-VPN-01. Verify user reconnection. Engage vendor TAC if restart fails.",assignee:"Rahul Mehta",group:"Network Ops",priority:"Medium",due:"2026-03-14",status:"open",created:"14 Mar, 11:40",subtasks:["Pre-restart checks","Perform restart","Validate 5 test users reconnect"]},
+];
+const detHistTasks = [
+  {id:"TASK-H001",type:"investigate",title:"Initial triage — confirm scope of affected users",assignee:"Priya Sharma",closed:"14 Mar, 10:15",duration:"53m",note:"Confirmed 45 users affected across floors 2–5. Mass auth failures from 09:15 SGT."},
+  {id:"TASK-H002",type:"escalate",title:"Escalate to L2 Network Operations",assignee:"Service Desk L1",closed:"14 Mar, 10:30",duration:"22m",note:"Ticket escalated after L1 confirmed scope beyond service desk capability."},
+  {id:"TASK-H003",type:"verify",title:"Rule out local firewall or ISP issue at SG office",assignee:"Onsite IT — SG",closed:"14 Mar, 10:52",duration:"40m",note:"Local firewall rules unchanged and ISP circuit healthy. Issue confirmed at concentrator level."},
+  {id:"TASK-H004",type:"document",title:"Log initial case details in system",assignee:"Priya Sharma",closed:"14 Mar, 09:35",duration:"12m",note:"Full case details, affected CI, business impact and requester info recorded."},
+  {id:"TASK-H005",type:"communicate",title:"Acknowledge case to requester — SLA notification sent",assignee:"System Bot",closed:"14 Mar, 09:23",duration:"1m",note:"Auto-acknowledgement sent to Priya Sharma. SLA clock started."},
+];
+
+const allTasks = [
+  {id:"TASK-001",type:"investigate",title:"Identify root cause of SG-VPN-01 CPU spike",            caseNum:"CASE-1042",assignee:"Rahul Mehta",   group:"Network Ops",     priority:"High",  status:"in-progress",due:"2026-03-14",created:"14 Mar, 09:30",updated:"14 Mar, 11:42",desc:"Review syslog, SNMP traps and traffic graphs between 08:00–10:00 SGT. Correlate CPU spike onset with any recent config change or deployment window.",subtasks:["Pull syslog 08:00–10:00 SGT","Check SNMP CPU graph on SG-VPN-01","Verify no change tickets overlap with spike time"],activity:[{av:"RM",col:"#1a7a4a",who:"Rahul Mehta",action:"added work note",when:"14 Mar, 11:42",text:"CPU spike confirmed at 09:18 SGT. Correlates with scheduled BGP table refresh. Runbook NW-042 restart initiated."},{av:"RM",col:"#1a7a4a",who:"Rahul Mehta",action:"updated status",when:"14 Mar, 10:30",change:{from:"Open",to:"In Progress"}},{av:"PS",col:"#b45300",who:"Priya Sharma",action:"created task",when:"14 Mar, 09:30",text:"Task created as part of CASE-1042 initial triage."}]},
+  {id:"TASK-002",type:"communicate",title:"Send business impact notification to Trading Ops leadership",caseNum:"CASE-1042",assignee:"Priya Sharma",group:"Service Desk",  priority:"High",  status:"open",       due:"2026-03-14",created:"14 Mar, 09:45",updated:"14 Mar, 09:45",desc:"Prepare and send status communication to Trading Ops VP and BCP team covering: scope of outage, current status, ETA for resolution, and workaround options.",subtasks:["Draft email to VP Trading Ops","CC BCP team lead","Schedule 30-min bridge call at 12:00 SGT"],activity:[{av:"PS",col:"#b45300",who:"Priya Sharma",action:"created task",when:"14 Mar, 09:45",text:"Communication task created. Awaiting L2 assessment before sending ETA to leadership."}]},
+  {id:"TASK-003",type:"remediate",  title:"Apply hotfix / restart VPN concentrator per runbook NW-042",caseNum:"CASE-1042",assignee:"Rahul Mehta",  group:"Network Ops",    priority:"Medium",status:"open",       due:"2026-03-14",created:"14 Mar, 11:40",updated:"14 Mar, 11:40",desc:"Follow NW-042 runbook for controlled restart of SG-VPN-01. Coordinate maintenance window with NOC. Verify user reconnection post-restart. Engage Cisco TAC if restart fails.",subtasks:["Pre-restart: notify NOC and stakeholders","Execute controlled restart per NW-042","Post-restart: validate 5 test users reconnect","Monitor CPU for 15 minutes post-restart"],activity:[{av:"RM",col:"#1a7a4a",who:"Rahul Mehta",action:"created task",when:"14 Mar, 11:40",text:"Runbook NW-042 identified as remediation path. Coordinator approval pending before execution."}]},
+  {id:"TASK-004",type:"investigate",title:"Diagnose Core Banking DB unresponsiveness",              caseNum:"CASE-1041",assignee:"Sanjay Patel",  group:"DBA Team",        priority:"High",  status:"in-progress",due:"2026-03-14",created:"14 Mar, 10:00",updated:"14 Mar, 11:10",desc:"Investigate why Core Banking Oracle DB is unresponsive. Check alert log, AWR reports, tablespace usage, active sessions and lock contention.",subtasks:["Check Oracle alert log for ORA- errors","Run AWR snapshot for last 2 hours","Check tablespace free space","Identify blocking sessions"],activity:[{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"added work note",when:"14 Mar, 11:10",text:"ORA-04031 found in alert log — shared pool exhausted. Memory pressure from batch job overlap. Working on flush."},{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"updated status",when:"14 Mar, 10:20",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-005",type:"escalate",   title:"Escalate to DBA team — P1 response required",           caseNum:"CASE-1041",assignee:"Arun Nair",     group:"Service Desk",    priority:"High",  status:"done",       due:"2026-03-14",created:"14 Mar, 10:05",updated:"14 Mar, 10:08",desc:"Escalate CASE-1041 to DBA on-call for P1 response. Ensure DBA team is paged and confirms engagement within 15 minutes.",subtasks:["Page DBA on-call via PagerDuty","Confirm DBA acknowledgement","Bridge DBA into incident call"],activity:[{av:"AN",col:"#1a56db",who:"Arun Nair",action:"marked done",when:"14 Mar, 10:08",text:"DBA team (Sanjay Patel) confirmed engagement at 10:06. P1 bridge call active."}]},
+  {id:"TASK-006",type:"communicate",title:"Notify Core Banking stakeholders of outage",             caseNum:"CASE-1041",assignee:"Sanjay Patel",  group:"Service Desk",    priority:"High",  status:"open",       due:"2026-03-14",created:"14 Mar, 10:15",updated:"14 Mar, 10:15",desc:"Send outage notification to Core Banking business stakeholders. Include: affected systems, impact scope, current status, and next update time.",subtasks:["Draft major incident notification","Get approval from incident manager","Send to Core Banking distribution list"],activity:[{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"created task",when:"14 Mar, 10:15",text:"Stakeholder comms task raised. Draft pending DBA status update before broadcast."}]},
+  {id:"TASK-007",type:"investigate",title:"Review MFA logs — HSBC Direct portal auth failures",    caseNum:"CASE-1039",assignee:"Kiran Singh",   group:"Security Ops",    priority:"High",  status:"in-progress",due:"2026-03-14",created:"13 Mar, 18:00",updated:"13 Mar, 22:15",desc:"Analyse Azure AD and HSBC Direct authentication logs to determine why MFA challenges are not being triggered. Cross-reference with recent Conditional Access policy changes.",subtasks:["Export auth logs from Azure AD — last 24h","Check Conditional Access policy change history","Identify affected user accounts","Verify MFA registration status for affected users"],activity:[{av:"KS",col:"#5b21b6",who:"Kiran Singh",action:"added work note",when:"13 Mar, 22:15",text:"Conditional Access policy 'MFA-PROD-01' was modified at 17:43 by admin account. 'Exclude trusted locations' was broadened. Reverting."},{av:"KS",col:"#5b21b6",who:"Kiran Singh",action:"updated status",when:"13 Mar, 19:00",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-008",type:"verify",     title:"Verify MFA bypass not exploited — security check",      caseNum:"CASE-1039",assignee:"Kiran Singh",   group:"Security Ops",    priority:"High",  status:"open",       due:"2026-03-15",created:"13 Mar, 18:30",updated:"13 Mar, 18:30",desc:"Audit sign-in logs for any suspicious authentications during the MFA bypass window (17:43–22:00 13 Mar). Confirm no unauthorised access occurred.",subtasks:["Export sign-in logs for bypass window","Filter for logins without MFA from untrusted IPs","Cross-check with known employee devices","Escalate to CISO if anomalies found"],activity:[{av:"KS",col:"#5b21b6",who:"Kiran Singh",action:"created task",when:"13 Mar, 18:30",text:"Security verification task raised. Will execute once CA policy is reverted and MFA is confirmed restored."}]},
+  {id:"TASK-009",type:"remediate",  title:"Restart SWIFT gateway integration service",             caseNum:"CASE-1037",assignee:"Amit Kumar",    group:"Middleware Ops",  priority:"High",  status:"in-progress",due:"2026-03-13",created:"13 Mar, 15:00",updated:"13 Mar, 15:52",desc:"Restart the SWIFT Gateway service on mw-prod-01 per runbook MW-019. Coordinate with Payments team. Confirm transaction queue drains post-restart.",subtasks:["Confirm no in-flight transactions","Execute service restart on mw-prod-01","Monitor queue drain — expect 8–12 min","Confirm first successful SWIFT ACK"],activity:[{av:"AK",col:"#166534",who:"Amit Kumar",action:"added work note",when:"13 Mar, 15:52",text:"Service restarted at 15:48. Queue draining. First ACK received at 15:51. Monitoring."},{av:"AK",col:"#166534",who:"Amit Kumar",action:"updated status",when:"13 Mar, 15:10",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-010",type:"verify",     title:"Validate payment transactions resumed — spot check",    caseNum:"CASE-1037",assignee:"Amit Kumar",    group:"Payments Ops",    priority:"High",  status:"open",       due:"2026-03-13",created:"13 Mar, 15:30",updated:"13 Mar, 15:30",desc:"Perform spot-check of 10 SWIFT transactions post-restart. Confirm ACKs received, settlement status correct, and no duplicate sends.",subtasks:["Pull 10 transactions from queue post-restart","Verify ACK status in SWIFT Alliance","Confirm settlement status with Payments team","Log verification result"],activity:[{av:"AK",col:"#166534",who:"Amit Kumar",action:"created task",when:"13 Mar, 15:30",text:"Verification task raised. Will execute once service restart is confirmed stable."}]},
+  {id:"TASK-011",type:"document",   title:"Document SWIFT timeout root cause and resolution",      caseNum:"CASE-1037",assignee:"Vikram Joshi",  group:"Middleware Ops",  priority:"Medium",status:"open",       due:"2026-03-16",created:"13 Mar, 16:00",updated:"13 Mar, 16:00",desc:"Write post-incident documentation covering: root cause (connection pool exhaustion), resolution steps, timeline, and preventive recommendations.",subtasks:["Draft root cause analysis","Document timeline from alert to resolution","Add preventive recommendations","Get sign-off from team lead"],activity:[{av:"VJ",col:"#1a56db",who:"Vikram Joshi",action:"created task",when:"13 Mar, 16:00",text:"Documentation task raised for post-incident record. Due before next change window."}]},
+  {id:"TASK-012",type:"remediate",  title:"Renew SSL certificate — API gateway prod",              caseNum:"CASE-1035",assignee:"Pradeep Nair",  group:"Security Ops",    priority:"High",  status:"in-progress",due:"2026-03-14",created:"12 Mar, 09:00",updated:"13 Mar, 12:00",desc:"Renew SSL/TLS certificate for api-gateway.prod.hsbc. Coordinate with Entrust CA. Deploy via cert-manager in GKE. Verify all downstream services accept renewed cert.",subtasks:["Generate CSR for api-gateway.prod.hsbc","Submit to Entrust CA — use internal portal","Download and validate renewed cert","Deploy via cert-manager in GKE prod","Smoke test API endpoints post-deploy"],activity:[{av:"PN",col:"#166534",who:"Pradeep Nair",action:"added work note",when:"13 Mar, 12:00",text:"CSR submitted to Entrust CA. Awaiting issuance — ETA 2–4 hours. Will deploy once received."},{av:"PN",col:"#166534",who:"Pradeep Nair",action:"updated status",when:"12 Mar, 10:00",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-013",type:"verify",     title:"Confirm cert renewal deployed and services healthy",    caseNum:"CASE-1035",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"High",  status:"open",       due:"2026-03-15",created:"12 Mar, 09:30",updated:"12 Mar, 09:30",desc:"After cert-manager deploys the renewed certificate, verify all API gateway routes respond with HTTPS 200, TLS version is 1.2+, and cert expiry is updated in monitoring.",subtasks:["Check cert expiry via openssl s_client","Verify API gateway health endpoints","Confirm cert expiry updated in Datadog monitor","Update cert tracking spreadsheet"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"12 Mar, 09:30",text:"Verification task created. Pending cert deployment by Pradeep."}]},
+  {id:"TASK-014",type:"remediate",  title:"Patch Kafka consumer config — transaction events",      caseNum:"CASE-1034",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Medium",status:"done",       due:"2026-03-12",created:"12 Mar, 18:00",updated:"12 Mar, 21:45",desc:"Update Kafka consumer group config for transaction-events topic. Increase max.poll.records from 100 to 500 and session.timeout.ms from 30s to 60s to prevent rebalance-triggered lag.",subtasks:["Update consumer config in app-config repo","Deploy updated config via Helm","Monitor consumer lag in Kafka UI — target < 100","Verify no rebalance events for 30 min"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"marked done",when:"12 Mar, 21:45",text:"Config patched and deployed. Consumer lag dropped from 12,400 to < 50 within 8 minutes. Stable."},{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"updated status",when:"12 Mar, 19:00",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-015",type:"document",   title:"Post-mortem report — Kafka consumer lag spike",         caseNum:"CASE-1034",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Medium",status:"open",       due:"2026-03-13",created:"12 Mar, 22:00",updated:"12 Mar, 22:00",desc:"Write post-mortem covering the Kafka consumer lag spike on transaction-events topic: root cause, business impact, resolution, and future prevention (consumer group monitoring alert).",subtasks:["Draft post-mortem from incident timeline","Add metric graphs (lag chart, rebalance events)","Include Kafka consumer config change as resolution","Recommend alert: lag > 1000 for 5 min → PagerDuty"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"12 Mar, 22:00",text:"Post-mortem task raised. Will complete tomorrow once metrics screenshots are available."}]},
+  {id:"TASK-016",type:"investigate",title:"Investigate GKE autoscaler policy — Prod cluster",     caseNum:"CASE-1032",assignee:"Bhushan Kadam", group:"Cloud Ops",       priority:"High",  status:"in-progress",due:"2026-03-15",created:"11 Mar, 19:00",updated:"12 Mar, 14:30",desc:"Determine why GKE HPA is not scaling the payment-service deployment under load. Check HPA config, metrics-server health, custom metrics pipeline, and resource request/limit ratios.",subtasks:["Check HPA describe output for payment-service","Verify metrics-server pods are healthy","Check custom metrics adapter (Stackdriver)","Review resource requests vs actual usage"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"added work note",when:"12 Mar, 14:30",text:"Metrics-server healthy. HPA is reading CPU metrics correctly but target utilisation threshold is set too high (90%). Nodes saturate before HPA triggers. Recommending 60% threshold."},{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"updated status",when:"11 Mar, 19:30",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-017",type:"action",     title:"Apply updated HPA config to Prod node pool",           caseNum:"CASE-1032",assignee:"Cloud Ops",     group:"Cloud Ops",       priority:"High",  status:"open",       due:"2026-03-15",created:"11 Mar, 19:15",updated:"11 Mar, 19:15",desc:"Apply the updated HPA configuration for payment-service: targetCPUUtilizationPercentage from 90 → 60, minReplicas 2 → 3. Deploy via Helm chart update in prod namespace.",subtasks:["Update Helm values for payment-service HPA","Run helm upgrade in prod namespace","Verify HPA picks up new config (kubectl describe hpa)","Load test to confirm autoscaling triggers correctly"],activity:[{av:"CO",col:"#5b21b6",who:"Cloud Ops",action:"created task",when:"11 Mar, 19:15",text:"Config action item raised pending investigation findings approval."}]},
+  {id:"TASK-018",type:"review",     title:"Review autoscaler metrics post-fix — 24h monitoring",  caseNum:"CASE-1032",assignee:"Ankit Sharma",  group:"Cloud Ops",       priority:"Medium",status:"open",       due:"2026-03-17",created:"11 Mar, 20:00",updated:"11 Mar, 20:00",desc:"Monitor HPA behaviour over 24 hours post-fix. Confirm scaling events occur at expected thresholds and no node saturation events. Document findings for change ticket closure.",subtasks:["Set up Datadog dashboard for payment-service HPA","Monitor 24h post-deployment","Log any anomalous scaling events","Sign off change ticket CHG-0441"],activity:[{av:"AS",col:"#166534",who:"Ankit Sharma",action:"created task",when:"11 Mar, 20:00",text:"24h monitoring task raised. Will start once HPA config is applied by Cloud Ops."}]},
+  {id:"TASK-019",type:"investigate",title:"Root cause — GL reconciliation sync failure",           caseNum:"CASE-1031",assignee:"Sanjay Patel",  group:"DBA Team",        priority:"High",  status:"done",       due:"2026-03-11",created:"11 Mar, 10:00",updated:"11 Mar, 13:00",desc:"Determine why GL reconciliation batch job failed overnight. Check job logs, DB connectivity, dependent service availability, and data integrity of failed records.",subtasks:["Review GL batch job logs in Splunk","Check DB connection pool utilisation at failure time","Identify first failed GL record","Check upstream feed (Core Banking API) availability"],activity:[{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"marked done",when:"11 Mar, 13:00",text:"Root cause confirmed: Core Banking API returned 503 at 02:14 for 18 minutes. GL batch job has no retry logic — failed immediately. 347 records need replay."},{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"updated status",when:"11 Mar, 10:30",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-020",type:"remediate",  title:"Replay failed GL sync transactions",                    caseNum:"CASE-1031",assignee:"Sanjay Patel",  group:"DBA Team",        priority:"High",  status:"done",       due:"2026-03-11",created:"11 Mar, 13:00",updated:"11 Mar, 16:30",desc:"Replay the 347 failed GL sync records from 11 Mar 02:14 batch run. Use GL replay utility (gl-replay.sh). Verify all records post successfully and GL balances reconcile.",subtasks:["Extract 347 failed record IDs","Run gl-replay.sh with failed record list","Monitor GL ingestion queue","Confirm GL day-end balances match Core Banking"],activity:[{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"marked done",when:"11 Mar, 16:30",text:"All 347 records replayed successfully. GL balances reconciled at 16:28. Finance confirmed sign-off."},{av:"SP",col:"#a80010",who:"Sanjay Patel",action:"updated status",when:"11 Mar, 13:30",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-021",type:"document",   title:"Complete RCA and stakeholder report — CASE-1031",      caseNum:"CASE-1031",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Medium",status:"open",       due:"2026-03-13",created:"11 Mar, 17:00",updated:"11 Mar, 17:00",desc:"Write full RCA for GL reconciliation failure: timeline, root cause (missing retry logic in batch job), business impact (347 records, Finance delay), and corrective actions.",subtasks:["Draft RCA from incident timeline","Include Core Banking API 503 as contributing cause","Propose fix: add retry with backoff to GL batch job","Get sign-off from Finance IT and Sanjay Patel"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"11 Mar, 17:00",text:"RCA task raised. Targeting completion by 13 Mar EOD before stakeholder review meeting."}]},
+  {id:"TASK-022",type:"investigate",title:"Diagnose Solace topic subscription drop",              caseNum:"CASE-1030",assignee:"Middleware Ops", group:"Middleware Ops",  priority:"Medium",status:"in-progress",due:"2026-03-15",created:"10 Mar, 16:00",updated:"11 Mar, 09:00",desc:"Investigate why consumers dropped their Solace topic subscriptions on 10 Mar 15:45. Check broker logs, consumer application health, and network connectivity between consumer hosts and broker.",subtasks:["Review Solace broker event logs 15:30–16:00","Check consumer application logs on mw-app-03","Verify network ACL changes around incident time","Check Solace client library version"],activity:[{av:"MO",col:"#5b21b6",who:"Middleware Ops",action:"added work note",when:"11 Mar, 09:00",text:"Solace broker log shows mass client disconnect at 15:47. Correlates with network maintenance window on core switch sw-prod-02. ACL change disrupted TCP connections."},{av:"MO",col:"#5b21b6",who:"Middleware Ops",action:"updated status",when:"10 Mar, 17:00",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-023",type:"remediate",  title:"Re-subscribe affected consumers — Solace broker",      caseNum:"CASE-1030",assignee:"Ravi Krishnan", group:"Middleware Ops",  priority:"Medium",status:"open",       due:"2026-03-15",created:"10 Mar, 16:30",updated:"10 Mar, 16:30",desc:"Re-establish Solace topic subscriptions for all affected consumers on mw-app-03 and mw-app-04. Restart consumer services in correct dependency order.",subtasks:["Restart notification-service (depends on none)","Restart event-router (depends on notification-service)","Restart audit-consumer (depends on none)","Verify message flow on each topic post-restart"],activity:[{av:"RK",col:"#166534",who:"Ravi Krishnan",action:"created task",when:"10 Mar, 16:30",text:"Re-subscription task raised. Waiting for network fix confirmation before consumer restart."}]},
+  {id:"TASK-024",type:"remediate",  title:"Apply Redis eviction policy fix — iQube prod",         caseNum:"CASE-1028",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"High",  status:"in-progress",due:"2026-03-15",created:"09 Mar, 11:00",updated:"10 Mar, 11:22",desc:"Change Redis eviction policy from allkeys-lru to volatile-lru to prevent active session keys from being evicted under memory pressure. Apply via Redis CONFIG SET and persist to redis.conf.",subtasks:["Confirm current eviction policy (CONFIG GET maxmemory-policy)","Apply volatile-lru policy via CONFIG SET","Persist to redis.conf on all 3 prod nodes","Monitor session drop rate for 1h post-change"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"added work note",when:"10 Mar, 11:22",text:"volatile-lru applied on redis-prod-01 and redis-prod-02. Session drop rate already falling. Applying to redis-prod-03 next."},{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"updated status",when:"09 Mar, 12:00",change:{from:"Open",to:"In Progress"}}]},
+  {id:"TASK-025",type:"verify",     title:"Monitor session drop rate post-fix — 1h window",       caseNum:"CASE-1028",assignee:"Dev Team",      group:"Dev Team",        priority:"Medium",status:"open",       due:"2026-03-15",created:"09 Mar, 11:30",updated:"09 Mar, 11:30",desc:"Monitor iQube prod session drop rate for 1 hour after volatile-lru policy is applied to all Redis nodes. Target: zero session drops per minute. Confirm in Datadog.",subtasks:["Open Datadog dashboard: iQube Session Health","Alert threshold: drop rate > 2/min","Document drop rate at t+15, t+30, t+60 minutes","Mark case resolved if stable at t+60"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"09 Mar, 11:30",text:"Monitoring task created. Will run once all 3 Redis nodes have policy applied."}]},
+  {id:"TASK-026",type:"document",   title:"Update Redis config runbook with fix details",          caseNum:"CASE-1028",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Low",   status:"open",       due:"2026-03-18",created:"09 Mar, 12:00",updated:"09 Mar, 12:00",desc:"Update the Redis Operations Runbook (Confluence: INFRA-REDIS-001) with the eviction policy change procedure and the rationale for volatile-lru in session-cache use cases.",subtasks:["Update INFRA-REDIS-001 — add eviction policy section","Document volatile-lru vs allkeys-lru decision matrix","Add monitoring verification steps","Get peer review from Pradeep Nair"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"09 Mar, 12:00",text:"Documentation task raised for runbook update. Low priority — after monitoring confirms fix is stable."}]},
+  {id:"TASK-027",type:"review",     title:"Weekly SLA compliance review — all open cases",        caseNum:"CASE-1036",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Medium",status:"open",       due:"2026-03-17",created:"13 Mar, 09:00",updated:"13 Mar, 09:00",desc:"Review SLA compliance across all open cases for the week of 9–15 Mar. Identify any cases at risk of breach. Prepare summary for Monday stand-up.",subtasks:["Pull open case list from iQube","Flag cases with < 4h SLA remaining","Prepare breach risk summary","Send to team lead by Sunday EOD"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"13 Mar, 09:00",text:"Weekly SLA review task. Regular cadence — every Monday prep on Sunday."}]},
+  {id:"TASK-028",type:"communicate",title:"Send weekly team status update to stakeholders",        caseNum:"CASE-1032",assignee:"Bhushan Kadam", group:"Dev Team",        priority:"Low",   status:"open",       due:"2026-03-18",created:"14 Mar, 08:00",updated:"14 Mar, 08:00",desc:"Compile and send the weekly engineering team status update covering: open P1/P2 incidents, resolved cases, upcoming maintenance windows, and team capacity.",subtasks:["Compile incident summary from iQube","Add upcoming maintenance windows from CAB","Draft email in standard template","Send to distribution list: tech-stakeholders@hsbc.com"],activity:[{av:"BK",col:"#DB0011",who:"Bhushan Kadam",action:"created task",when:"14 Mar, 08:00",text:"Weekly comms task. Recurring every Tuesday morning."}]},
+];
+
+const stLabel = {new:"New",progress:"In Progress",pending:"Pending",resolved:"Resolved",closed:"Closed"};
+const stClass = {new:"st-new",progress:"st-progress",pending:"st-pending",resolved:"st-resolved",closed:"st-closed"};
+const priClass = {Critical:"p-critical",High:"p-high",Medium:"p-medium",Low:"p-low"};
+const tpClass  = {investigate:"tp-investigate",remediate:"tp-remediate",communicate:"tp-communicate",verify:"tp-verify",escalate:"tp-escalate",document:"tp-document",review:"tp-review",action:"tp-action"};
+const tpLabel  = {investigate:"Investigate",remediate:"Remediate",communicate:"Communicate",verify:"Verify",escalate:"Escalate",document:"Document",review:"Review",action:"Action Item"};
+const typeColor= {Incident:"#a80010","Service Request":"#1a56db",Complaint:"#b45300",Inquiry:"#166534",Change:"#5b21b6"};
+const statusLabel = {open:"Open","in-progress":"In Progress",done:"Done"};
+const statusClass = {open:"st-new","in-progress":"st-progress",done:"st-resolved"};
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+function fmtDue(d){ return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}); }
+function dueClass(d){ const dt=new Date(d),now=new Date('2026-03-15'); if(dt<now) return 'ov'; if(dt.toDateString()===now.toDateString()) return 'td'; return 'ok'; }
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+const moduleNames = {dashboard:'iQube — Dashboard','my-tasks':'iQube — My Tasks',list:'iQube — Cases','task-list':'iQube — Tasks',detail:'iQube — Case Detail','task-detail':'iQube — Task Detail'};
+let caseGridApi = null, taskGridApi = null;
+let currentTaskId = null;
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sb-nav li a').forEach(a => a.classList.remove('active'));
+  const view = $('view-' + name);
+  if (view) view.classList.add('active');
+  const nav = $('nav-' + name);
+  if (nav) nav.classList.add('active');
+  $('hdr-module').textContent = moduleNames[name] || 'iQube';
+  window.scrollTo(0,0);
+
+  if (name === 'list' && caseGridApi) {
+    setTimeout(() => {
+      const ids = caseGridApi.getColumns()?.map(c=>c.getColId()).filter(id=>id!=='subject'&&id!=='_sel')||[];
+      caseGridApi.autoSizeColumns(ids, false);
+    }, 80);
+  }
+  if (name === 'task-list' && taskGridApi) {
+    setTimeout(() => {
+      const ids = taskGridApi.getColumns()?.map(c=>c.getColId()).filter(id=>id!=='title')||[];
+      taskGridApi.autoSizeColumns(ids, false);
+    }, 80);
+  }
+}
+
+function showDetail(caseNum) {
+  const c = cases.find(x => x.num === caseNum);
+  $('det-num').textContent = caseNum;
+  $('det-bc-num').textContent = caseNum;
+  $('det-case-num').textContent = caseNum;
+  if (c) {
+    $('det-subject').value = c.subject;
+    $('det-state-badge').innerHTML = `<span class="st ${stClass[c.state]}">${stLabel[c.state]}</span>`;
+  }
+  renderDetTasks();
+  renderDetHistTasks();
+  // reset to Details tab
+  document.querySelectorAll('.det-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+  document.querySelector('.det-tab').classList.add('active');
+  $('tc-details').classList.add('active');
+  showView('detail');
+}
+
+function switchTab(el, id) {
+  document.querySelectorAll('.det-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  $(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// TASK DETAIL
+// ═══════════════════════════════════════════════════
+function showTaskDetail(taskId) {
+  const t = allTasks.find(x => x.id === taskId);
+  if (!t) return;
+  currentTaskId = taskId;
+
+  // Breadcrumb & header
+  $('td-bc-num').textContent = taskId;
+  $('td-num').textContent = taskId;
+  $('td-task-id').textContent = taskId;
+  $('td-status-badge').innerHTML = `<span class="st ${statusClass[t.status]}">${statusLabel[t.status]}</span>`;
+
+  // Resolve button label
+  const resolveBtn = $('td-resolve-btn');
+  if (resolveBtn) resolveBtn.textContent = t.status === 'done' ? '✓ Done' : 'Mark Done';
+
+  // Form fields
+  $('td-status-sel').value   = t.status;
+  $('td-type-sel').value     = t.type;
+  $('td-priority-sel').value = t.priority;
+  $('td-assignee-inp').value = t.assignee;
+  $('td-group-inp').value    = t.group || '—';
+  $('td-due-inp').value      = t.due;
+  $('td-title-inp').value    = t.title;
+  $('td-desc-inp').value     = t.desc || '';
+
+  // Case link
+  $('td-case-link').textContent = t.caseNum;
+  $('td-panel-case').textContent = t.caseNum;
+
+  // Side panel
+  $('td-panel-due').innerHTML    = `<span class="t-due ${dueClass(t.due)}">${fmtDue(t.due)}</span>`;
+  $('td-panel-created').textContent  = t.created;
+  $('td-panel-updated').textContent  = t.updated || t.created;
+  $('td-panel-assignee').textContent = t.assignee;
+  $('td-panel-group').textContent    = t.group || '—';
+
+  // Parent case panel
+  const c = cases.find(x => x.num === t.caseNum);
+  if (c) {
+    $('td-panel-case-state').innerHTML = `<span class="st ${stClass[c.state]}" style="font-size:10.5px">${stLabel[c.state]}</span>`;
+    $('td-panel-case-pri').innerHTML   = `<span class="prio ${priClass[c.pri]}" style="font-size:10px">${c.pri}</span>`;
+  }
+
+  // Subtask badge & progress
+  const subs = t.subtasks || [];
+  $('td-sub-badge').textContent = subs.length;
+  const done = subs.filter((_,i) => (t.subtasksDone||{})[i]).length;
+  const pct = subs.length ? Math.round(done/subs.length*100) : 0;
+  $('td-panel-subtask-progress').textContent = subs.length ? `${done} of ${subs.length} subtasks complete` : 'No subtasks';
+  $('td-panel-progress-bar').style.width = pct + '%';
+
+  renderTdSubtasks(t);
+  renderTdActivity(t);
+  renderTdRelated(t);
+
+  // Reset tabs to Details
+  document.querySelectorAll('.det-tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(x => x.classList.remove('active'));
+  document.querySelector('#view-task-detail .det-tab').classList.add('active');
+  $('tt-details').classList.add('active');
+
+  showView('task-detail');
+}
+
+function renderTdSubtasks(t) {
+  const el = $('td-subtasks-list'); if (!el) return;
+  const subs = t.subtasks || [];
+  if (!subs.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px">No subtasks yet. Click + Add to create one.</div>'; return; }
+  if (!t.subtasksDone) t.subtasksDone = {};
+  el.innerHTML = subs.map((s, i) => `
+    <div class="task-row" style="grid-template-columns:30px 1fr auto">
+      <div><div class="tchk ${t.subtasksDone[i]?'done':''}" onclick="toggleSubtask('${t.id}',${i})"></div></div>
+      <div style="font-size:13px;${t.subtasksDone[i]?'text-decoration:line-through;color:var(--text-muted)':''}">${s}</div>
+      <div style="font-size:11px;color:var(--text-light)">${t.subtasksDone[i]?'✓ Done':'Pending'}</div>
+    </div>`).join('');
+}
+
+function toggleSubtask(taskId, idx) {
+  const t = allTasks.find(x => x.id === taskId); if (!t) return;
+  if (!t.subtasksDone) t.subtasksDone = {};
+  t.subtasksDone[idx] = !t.subtasksDone[idx];
+  const done = (t.subtasks||[]).filter((_,i) => t.subtasksDone[i]).length;
+  const total = (t.subtasks||[]).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  $('td-panel-subtask-progress').textContent = `${done} of ${total} subtasks complete`;
+  $('td-panel-progress-bar').style.width = pct + '%';
+  renderTdSubtasks(t);
+}
+
+function addSubtask() {
+  const text = prompt('Subtask description:');
+  if (!text || !text.trim()) return;
+  const t = allTasks.find(x => x.id === currentTaskId); if (!t) return;
+  if (!t.subtasks) t.subtasks = [];
+  t.subtasks.push(text.trim());
+  $('td-sub-badge').textContent = t.subtasks.length;
+  renderTdSubtasks(t);
+}
+
+function renderTdActivity(t) {
+  const el = $('td-activity-list'); if (!el) return;
+  const acts = t.activity || [];
+  el.innerHTML = acts.map(a => `
+    <div class="act-entry">
+      <div class="act-av" style="background:${a.col}">${a.av}</div>
+      <div>
+        <div class="act-meta">
+          <span class="act-who">${a.who}</span>
+          <span class="act-action">${a.action}</span>
+          <span class="act-when">${a.when}</span>
+        </div>
+        ${a.text  ? `<div class="act-text">${a.text}</div>` : ''}
+        ${a.change? `<div class="act-change">Status: <span class="act-from">${a.change.from}</span> → <span class="act-to">${a.change.to}</span></div>` : ''}
+      </div>
+    </div>`).join('') + `
+    <div class="cmt-box">
+      <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Add Note</div>
+      <textarea id="td-note-input" placeholder="Type your note or update…"></textarea>
+      <div class="cmt-foot">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" onclick="postTaskNote()">Post Note</button>
+      </div>
+    </div>`;
+}
+
+function postTaskNote() {
+  const input = $('td-note-input'); if (!input) return;
+  const text = input.value.trim(); if (!text) return;
+  const t = allTasks.find(x => x.id === currentTaskId); if (!t) return;
+  if (!t.activity) t.activity = [];
+  t.activity.unshift({av:'BK', col:'#DB0011', who:'Bhushan Kadam', action:'added note', when:'Just now', text});
+  renderTdActivity(t);
+}
+
+function renderTdRelated(t) {
+  const caseEl = $('td-related-case-info'); if (!caseEl) return;
+  const c = cases.find(x => x.num === t.caseNum);
+  if (c) {
+    caseEl.innerHTML = `
+      <div class="fgrid" style="border:1px solid var(--border);border-radius:2px;overflow:hidden">
+        <div class="ff"><label>Case Number</label><div class="val"><a class="cell-case-num" href="#" onclick="event.preventDefault();tdGoToCase()">${c.num}</a></div></div>
+        <div class="ff"><label>State</label><div class="val"><span class="st ${stClass[c.state]}">${stLabel[c.state]}</span></div></div>
+        <div class="ff"><label>Priority</label><div class="val"><span class="prio ${priClass[c.pri]}">${c.pri}</span></div></div>
+        <div class="ff"><label>Assigned To</label><div class="val">${c.assigned}</div></div>
+        <div class="ff fw"><label>Subject</label><div class="val" style="font-size:13px">${c.subject}</div></div>
+      </div>`;
+  }
+
+  const sibEl = $('td-sibling-tasks'); if (!sibEl) return;
+  const siblings = allTasks.filter(x => x.caseNum === t.caseNum && x.id !== t.id);
+  if (!siblings.length) { sibEl.innerHTML = '<div style="padding:14px;font-size:13px;color:var(--text-muted)">No other tasks on this case.</div>'; return; }
+  sibEl.innerHTML = siblings.map(s => `
+    <div class="task-row" onclick="showTaskDetail('${s.id}')" style="cursor:pointer">
+      <div><div class="tchk ${s.status==='in-progress'?'ip':s.status==='done'?'done':''}"></div></div>
+      <div>
+        <div class="t-title ${s.status==='done'?'done-txt':''}" style="font-size:12.5px">${s.title}</div>
+        <div class="t-meta" style="margin-top:3px">
+          <span class="tp ${tpClass[s.type]}">${tpLabel[s.type]}</span>
+          <span class="t-mi">👤 ${s.assignee}</span>
+          <span class="t-mi" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--brand)">${s.id}</span>
+        </div>
+      </div>
+      <div class="t-right">
+        <span class="t-due ${dueClass(s.due)}">📅 ${fmtDue(s.due)}</span>
+        <span class="st ${statusClass[s.status]}" style="font-size:10.5px">${statusLabel[s.status]}</span>
+      </div>
+    </div>`).join('');
+}
+
+function tdGoToCase() {
+  const t = allTasks.find(x => x.id === currentTaskId);
+  if (t) showDetail(t.caseNum);
+}
+
+function markTaskDone() {
+  const t = allTasks.find(x => x.id === currentTaskId); if (!t) return;
+  t.status = t.status === 'done' ? 'open' : 'done';
+  t.updated = 'Just now';
+  $('td-status-badge').innerHTML = `<span class="st ${statusClass[t.status]}">${statusLabel[t.status]}</span>`;
+  $('td-status-sel').value = t.status;
+  $('td-resolve-btn').textContent = t.status === 'done' ? '✓ Done' : 'Mark Done';
+  if (taskGridApi) taskGridApi.setGridOption('rowData', allTasks);
+}
+
+function saveTaskDetail() {
+  const t = allTasks.find(x => x.id === currentTaskId); if (!t) return;
+  t.status   = $('td-status-sel').value;
+  t.type     = $('td-type-sel').value;
+  t.priority = $('td-priority-sel').value;
+  t.assignee = $('td-assignee-inp').value;
+  t.group    = $('td-group-inp').value;
+  t.due      = $('td-due-inp').value;
+  t.title    = $('td-title-inp').value;
+  t.desc     = $('td-desc-inp').value;
+  t.updated  = 'Just now';
+  $('td-status-badge').innerHTML = `<span class="st ${statusClass[t.status]}">${statusLabel[t.status]}</span>`;
+  $('td-panel-due').innerHTML    = `<span class="t-due ${dueClass(t.due)}">${fmtDue(t.due)}</span>`;
+  $('td-panel-assignee').textContent = t.assignee;
+  $('td-panel-group').textContent    = t.group;
+  $('td-panel-updated').textContent  = 'Just now';
+  if (taskGridApi) taskGridApi.setGridOption('rowData', allTasks);
+  alert('Task saved successfully.');
+}
+
+
+// ═══════════════════════════════════════════════════
+// CUSTOM PAGINATION BAR
+// ═══════════════════════════════════════════════════
+function updatePaginationBar(api, prefix) {
+  const total      = api.getDisplayedRowCount();
+  const pageSize   = api.paginationGetPageSize();
+  const curPage    = api.paginationGetCurrentPage();
+  const totalPages = api.paginationGetTotalPages();
+
+  const from = total === 0 ? 0 : curPage * pageSize + 1;
+  const to   = Math.min((curPage + 1) * pageSize, total);
+
+  const ri = $(prefix + '-row-info');
+  if (ri) ri.textContent = prefix === 'case'
+    ? `${total} case${total !== 1 ? 's' : ''}`
+    : `${total} task${total !== 1 ? 's' : ''}`;
+
+  const cb = $(prefix === 'case' ? 'case-grid-cnt' : 'task-grid-cnt');
+  if (cb) cb.textContent = total;
+
+  const info = $(prefix + '-pg-info');
+  if (info) info.textContent = total === 0 ? 'No results' : `${from}\u2013${to} of ${total}`;
+
+  const setDis = (id, val) => { const b = $(id); if (b) b.disabled = val; };
+  setDis(prefix + '-pg-first', curPage === 0);
+  setDis(prefix + '-pg-prev',  curPage === 0);
+  setDis(prefix + '-pg-next',  curPage >= totalPages - 1);
+  setDis(prefix + '-pg-last',  curPage >= totalPages - 1);
+
+  const pagesEl = $(prefix + '-pg-pages'); if (!pagesEl) return;
+  if (totalPages <= 1) { pagesEl.innerHTML = ''; return; }
+
+  const pages = buildPageWindow(curPage, totalPages);
+  pagesEl.innerHTML = pages.map(p =>
+    p === '...'
+      ? '<span class="pg-ellipsis">\u2026</span>'
+      : `<button class="pg-btn pg-num${p === curPage ? ' cur' : ''}" onclick="${prefix}PgNav(${p})">${p + 1}</button>`
+  ).join('');
+}
+
+function buildPageWindow(cur, total) {
+  const show = new Set([0, total - 1, cur, cur - 1, cur + 1].filter(p => p >= 0 && p < total));
+  const sorted = [...show].sort((a, b) => a - b);
+  const result = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push('...');
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
+function casePgNav(action) {
+  if (!caseGridApi) return;
+  if      (action === 'first') caseGridApi.paginationGoToFirstPage();
+  else if (action === 'prev')  caseGridApi.paginationGoToPreviousPage();
+  else if (action === 'next')  caseGridApi.paginationGoToNextPage();
+  else if (action === 'last')  caseGridApi.paginationGoToLastPage();
+  else                         caseGridApi.paginationGoToPage(action);
+}
+
+function taskPgNav(action) {
+  if (!taskGridApi) return;
+  if      (action === 'first') taskGridApi.paginationGoToFirstPage();
+  else if (action === 'prev')  taskGridApi.paginationGoToPreviousPage();
+  else if (action === 'next')  taskGridApi.paginationGoToNextPage();
+  else if (action === 'last')  taskGridApi.paginationGoToLastPage();
+  else                         taskGridApi.paginationGoToPage(action);
+}
+
+function setCasePageSize(size) {
+  if (!caseGridApi) return;
+  caseGridApi.paginationSetPageSize(size);
+  caseGridApi.paginationGoToFirstPage();
+}
+
+function setTaskPageSize(size) {
+  if (!taskGridApi) return;
+  taskGridApi.paginationSetPageSize(size);
+  taskGridApi.paginationGoToFirstPage();
+}
+
+function toggleSidebar() {
+  $('sidebar').classList.toggle('collapsed');
+  $('main-content').classList.toggle('sidebar-collapsed');
+  // Re-autosize grids after sidebar animation completes
+  setTimeout(() => {
+    if (caseGridApi) {
+      const ids = caseGridApi.getColumns()?.map(c=>c.getColId()).filter(id=>id!=='subject'&&id!=='_sel')||[];
+      caseGridApi.autoSizeColumns(ids, false);
+    }
+    if (taskGridApi) {
+      const ids = taskGridApi.getColumns()?.map(c=>c.getColId()).filter(id=>id!=='title')||[];
+      taskGridApi.autoSizeColumns(ids, false);
+    }
+  }, 250);
+}
+
+// ═══════════════════════════════════════════════════
+// FILTER PANEL TOGGLE
+// ═══════════════════════════════════════════════════
+function toggleFP(panelId, btnId) {
+  const panel = $(panelId), btn = $(btnId);
+  if (!panel) return;
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) { btn.style.borderColor='var(--brand)'; btn.style.color='var(--brand)'; }
+  else { btn.style.borderColor=''; btn.style.color=''; }
+}
+
+// ═══════════════════════════════════════════════════
+// CASE GRID — AG Grid SSRM simulation
+// ═══════════════════════════════════════════════════
+let caseFilterState = { state:'', pri:'', type:'', assign:'', q:'' };
+
+function getCaseFilteredData() {
+  const f = caseFilterState;
+  return cases.filter(c =>
+    (!f.q     || c.subject.toLowerCase().includes(f.q) || c.num.toLowerCase().includes(f.q)) &&
+    (!f.state || stLabel[c.state]===f.state) &&
+    (!f.pri   || c.pri===f.pri) &&
+    (!f.type  || c.type===f.type) &&
+    (!f.assign|| c.assigned===f.assign)
+  );
+}
+
+function initCaseGrid() {
+  const colDefs = [
+    { headerName:'', checkboxSelection:true, headerCheckboxSelection:true,
+      width:42, minWidth:42, maxWidth:42, resizable:false, sortable:false, suppressHeaderMenuButton:true },
+    { field:'num',      headerName:'Case #',     width:112,
+      cellRenderer: p => `<a class="cell-case-num" onclick="showDetail('${p.value}')">${p.value}</a>` },
+    { field:'type',     headerName:'Type',       width:118,
+      cellRenderer: p => `<span style="font-size:11px;font-weight:600;color:${typeColor[p.value]||'#333'}">${p.value||''}</span>` },
+    { field:'pri',      headerName:'Priority',   width:100,
+      cellRenderer: p => `<span class="prio ${priClass[p.value]||''}">${p.value||''}</span>` },
+    { field:'state',    headerName:'State',      width:112,
+      cellRenderer: p => `<span class="st ${stClass[p.data?.state]||''}">${stLabel[p.data?.state]||''}</span>` },
+    { field:'subject',  headerName:'Subject',    flex:2, minWidth:200,
+      cellRenderer: p => `<span style="font-size:12.5px">${p.value||''}</span>` },
+    { field:'requester',headerName:'Requester',  width:130,
+      cellRenderer: p => `<span style="font-size:12.5px">${p.value||''}</span>` },
+    { field:'assigned', headerName:'Assigned To',width:140,
+      cellRenderer: p => `<span style="font-size:12.5px">${p.value||''}</span>` },
+    { field:'cat',      headerName:'Category',   width:110,
+      cellRenderer: p => `<span class="ct-pill">${p.value||''}</span>` },
+    { field:'created',  headerName:'Created',    width:112,
+      cellRenderer: p => `<span style="font-size:12px;color:#999">${p.value||''}</span>` },
+    { field:'updated',  headerName:'Updated',    width:120,
+      cellRenderer: p => `<span style="font-size:12px;color:#999">${p.value||''}</span>` },
+  ];
+
+  const gridOptions = {
+    columnDefs: colDefs,
+    rowData: cases,
+    rowModelType: 'clientSide',
+    pagination: true,
+    paginationPageSize: 20,
+    suppressPaginationPanel: true,
+    rowSelection: 'multiple',
+    suppressRowClickSelection: true,
+    animateRows: true,
+    enableCellTextSelection: true,
+    defaultColDef: { resizable:true, sortable:true, filter:false },
+    onSelectionChanged(e) {
+      const sel = e.api.getSelectedRows();
+      const info = $('case-sel-info'), bulk = $('case-bulk-actions');
+      if (sel.length > 0) {
+        if (info) { info.textContent = `${sel.length} selected`; info.style.display='inline'; }
+        if (bulk) bulk.classList.add('visible');
+      } else {
+        if (info) info.style.display='none';
+        if (bulk) bulk.classList.remove('visible');
+      }
+    },
+    onPaginationChanged(e) {
+      updatePaginationBar(e.api, 'case');
+    },
+    onGridReady(e) {
+      caseGridApi = e.api;
+      setTimeout(() => {
+        const allColIds = e.api.getColumns()?.map(c => c.getColId()) || [];
+        const fixedCols = allColIds.filter(id => id !== 'subject' && id !== '_sel');
+        e.api.autoSizeColumns(fixedCols, false);
+      }, 100);
+    },
+  };
+
+  const el = $('case-grid');
+  if (el) caseGridApi = agGrid.createGrid(el, gridOptions);
+}
+
+function caseQuickSearch(q) {
+  caseFilterState.q = q.toLowerCase();
+  refreshCaseGrid();
+}
+
+function applyCaseFilters() {
+  caseFilterState.state  = $('cf-state')?.value  || '';
+  caseFilterState.pri    = $('cf-pri')?.value    || '';
+  caseFilterState.type   = $('cf-type')?.value   || '';
+  caseFilterState.assign = $('cf-assign')?.value || '';
+  refreshCaseGrid();
+  renderCaseChips();
+  updateFilterBtn('case-fp-btn','case-fp-cnt', Object.values(caseFilterState).filter(Boolean).length - (caseFilterState.q?1:0));
+}
+
+function clearCaseFilters() {
+  ['cf-state','cf-pri','cf-type','cf-assign'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  caseFilterState = { ...caseFilterState, state:'', pri:'', type:'', assign:'' };
+  refreshCaseGrid();
+  renderCaseChips();
+  updateFilterBtn('case-fp-btn','case-fp-cnt', 0);
+}
+
+function clearCaseSelection() { if (caseGridApi) caseGridApi.deselectAll(); }
+
+function refreshCaseGrid() {
+  if (!caseGridApi) return;
+  const data = getCaseFilteredData();
+  caseGridApi.setGridOption('rowData', data);
+}
+
+function renderCaseChips() {
+  const f = caseFilterState;
+  const chips = [];
+  if (f.state)  chips.push({l:'State',    v:f.state,  c:"document.getElementById('cf-state').value='';applyCaseFilters()"});
+  if (f.pri)    chips.push({l:'Priority', v:f.pri,    c:"document.getElementById('cf-pri').value='';applyCaseFilters()"});
+  if (f.type)   chips.push({l:'Type',     v:f.type,   c:"document.getElementById('cf-type').value='';applyCaseFilters()"});
+  if (f.assign) chips.push({l:'Assigned', v:f.assign, c:"document.getElementById('cf-assign').value='';applyCaseFilters()"});
+  const row = $('case-chips');
+  if (!row) return;
+  if (!chips.length) { row.style.display='none'; row.innerHTML=''; return; }
+  row.style.display = 'flex';
+  row.innerHTML = chips.map(c=>`<span class="chip"><strong>${c.l}:</strong> ${c.v}<button class="chip-x" onclick="${c.c}">×</button></span>`).join('') +
+    `<button onclick="clearCaseFilters()" style="font-family:inherit;font-size:11px;padding:1px 7px;border:none;background:none;cursor:pointer;color:var(--brand);font-weight:600">Clear all</button>`;
+}
+
+// ═══════════════════════════════════════════════════
+// TASK GRID — AG Grid SSRM simulation
+// ═══════════════════════════════════════════════════
+let taskFilterState = { status:'', type:'', pri:'', assign:'', q:'' };
+
+function getTaskFilteredData() {
+  const f = taskFilterState;
+  return allTasks.filter(t =>
+    (!f.q      || t.title.toLowerCase().includes(f.q) || t.id.toLowerCase().includes(f.q) || t.caseNum.toLowerCase().includes(f.q)) &&
+    (!f.status || t.status===f.status) &&
+    (!f.type   || t.type===f.type) &&
+    (!f.pri    || t.priority===f.pri) &&
+    (!f.assign || t.assignee===f.assign)
+  );
+}
+
+function initTaskGrid() {
+  const el = $('task-grid');
+  if (!el) { console.warn('task-grid element not found'); return; }
+
+  const colDefs = [
+    { headerName:'', checkboxSelection:true, headerCheckboxSelection:true,
+      width:42, minWidth:42, maxWidth:42, resizable:false, sortable:false, suppressHeaderMenuButton:true },
+    { field:'id',       headerName:'Task ID',    width:115,
+      cellRenderer: p => `<a class="cell-case-num" style="font-size:11.5px;cursor:pointer" onclick="showTaskDetail('${p.value}')">${p.value||''}</a>` },
+    { field:'type',     headerName:'Type',       width:115,
+      cellRenderer: p => `<span class="tp ${tpClass[p.value]||''}">${tpLabel[p.value]||p.value||''}</span>` },
+    { field:'title',    headerName:'Title',      minWidth:200, flex:1,
+      cellRenderer: p => `<span style="font-size:12.5px;cursor:pointer" onclick="showTaskDetail('${p.data?.id}')">${p.value||''}</span>` },
+    { field:'priority', headerName:'Priority',   width:95,
+      cellRenderer: p => `<span class="prio ${priClass[p.value]||''}">${p.value||''}</span>` },
+    { field:'status',   headerName:'Status',     width:115,
+      cellRenderer: p => `<span class="st ${statusClass[p.data?.status]||''}">${statusLabel[p.data?.status]||''}</span>` },
+    { field:'caseNum',  headerName:'Case #',     width:110,
+      cellRenderer: p => `<a class="cell-case-num" onclick="showDetail('${p.value}')" style="font-size:11.5px">${p.value||''}</a>` },
+    { field:'assignee', headerName:'Assigned To',width:135,
+      cellRenderer: p => `<span style="font-size:12.5px">${p.value||''}</span>` },
+    { field:'due',      headerName:'Due Date',   width:120,
+      cellRenderer: p => p.value ? `<span class="t-due ${dueClass(p.value)}">📅 ${fmtDue(p.value)}</span>` : '' },
+    { field:'created',  headerName:'Created',    width:115,
+      cellRenderer: p => `<span style="font-size:12px;color:#999">${p.value||''}</span>` },
+  ];
+
+  taskGridApi = agGrid.createGrid(el, {
+    columnDefs: colDefs,
+    rowData: allTasks,
+    pagination: true,
+    paginationPageSize: 20,
+    suppressPaginationPanel: true,
+    rowSelection: 'multiple',
+    suppressRowClickSelection: true,
+    animateRows: false,
+    defaultColDef: { resizable:true, sortable:true },
+    onPaginationChanged(e) {
+      updatePaginationBar(e.api, 'task');
+    },
+    onFirstDataRendered(e) {
+      const el2 = $('task-grid-cnt'); if (el2) el2.textContent = allTasks.length;
+      updatePaginationBar(e.api, 'task');
+      setTimeout(() => {
+        const ids = e.api.getColumns()?.map(c => c.getColId()).filter(id => id !== 'title') || [];
+        e.api.autoSizeColumns(ids, false);
+      }, 100);
+    },
+  });
+}
+
+function refreshTaskGrid() {
+  if (!taskGridApi) return;
+  const data = getTaskFilteredData();
+  taskGridApi.setGridOption('rowData', data);
+}
+
+function taskQuickSearch(q) {
+  taskFilterState.q = q.toLowerCase();
+  refreshTaskGrid();
+}
+
+function applyTaskFilters() {
+  taskFilterState.status = $('tf-status')?.value || '';
+  taskFilterState.type   = $('tf-type')?.value   || '';
+  taskFilterState.pri    = $('tf-pri')?.value     || '';
+  taskFilterState.assign = $('tf-assign')?.value  || '';
+  refreshTaskGrid();
+  renderTaskChips();
+  updateFilterBtn('task-fp-btn','task-fp-cnt', Object.values(taskFilterState).filter(Boolean).length - (taskFilterState.q?1:0));
+}
+
+function clearTaskFilters() {
+  ['tf-status','tf-type','tf-pri','tf-assign'].forEach(id => { const el=$(id); if(el) el.value=''; });
+  taskFilterState = { ...taskFilterState, status:'', type:'', pri:'', assign:'' };
+  refreshTaskGrid();
+  renderTaskChips();
+  updateFilterBtn('task-fp-btn','task-fp-cnt', 0);
+}
+
+
+function renderTaskChips() {
+  const f = taskFilterState;
+  const slbl = {open:'Open','in-progress':'In Progress',done:'Done'};
+  const chips = [];
+  if (f.status) chips.push({l:'Status',  v:slbl[f.status]||f.status, c:"document.getElementById('tf-status').value='';applyTaskFilters()"});
+  if (f.type)   chips.push({l:'Type',    v:tpLabel[f.type]||f.type,  c:"document.getElementById('tf-type').value='';applyTaskFilters()"});
+  if (f.pri)    chips.push({l:'Priority',v:f.pri,                     c:"document.getElementById('tf-pri').value='';applyTaskFilters()"});
+  if (f.assign) chips.push({l:'Assignee',v:f.assign,                  c:"document.getElementById('tf-assign').value='';applyTaskFilters()"});
+  const row = $('task-chips');
+  if (!row) return;
+  if (!chips.length) { row.style.display='none'; row.innerHTML=''; return; }
+  row.style.display = 'flex';
+  row.innerHTML = chips.map(c=>`<span class="chip"><strong>${c.l}:</strong> ${c.v}<button class="chip-x" onclick="${c.c}">×</button></span>`).join('') +
+    `<button onclick="clearTaskFilters()" style="font-family:inherit;font-size:11px;padding:1px 7px;border:none;background:none;cursor:pointer;color:var(--brand);font-weight:600">Clear all</button>`;
+}
+
+function updateFilterBtn(btnId, cntId, count) {
+  const btn = $(btnId), cnt = $(cntId);
+  if (!btn || !cnt) return;
+  cnt.style.display = count > 0 ? 'inline-flex' : 'none';
+  cnt.textContent = count;
+  btn.classList.toggle('has-filters', count > 0);
+}
+
+// ═══════════════════════════════════════════════════
+// DETAIL TASK RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════
+function renderDetTasks() {
+  const c = $('det-current-tasks'); if (!c) return;
+  c.innerHTML = detTasks.map((t,i) => `
+    <div class="task-row">
+      <div><div class="tchk ${t.status==='in-progress'?'ip':t.status==='done'?'done':''}" onclick="toggleDetTask(${i})"></div></div>
+      <div>
+        <div class="t-title ${t.status==='done'?'done-txt':''}">${t.title}</div>
+        <div class="t-meta">
+          <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+          <span class="t-mi">👤 <span style="font-weight:600;color:var(--text)">${t.assignee}</span></span>
+          <span class="t-mi">🏷️ ${t.group}</span>
+          <span class="t-mi">⚑ <span style="color:${t.priority==='High'?'var(--danger)':t.priority==='Medium'?'var(--warn)':'#999'};font-weight:700">${t.priority}</span></span>
+          <span class="t-mi" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">${t.id}</span>
+        </div>
+        <div style="font-size:12.5px;color:var(--text-muted);line-height:1.5">${t.desc}</div>
+        ${t.subtasks?`<div style="margin-top:7px;display:flex;flex-direction:column;gap:3px">${t.subtasks.map(s=>`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)"><span style="width:13px;height:13px;border:1.5px solid var(--border);border-radius:2px;display:inline-block;flex-shrink:0"></span>${s}</div>`).join('')}</div>`:''}
+      </div>
+      <div class="t-right">
+        <span class="t-due ${dueClass(t.due)}">📅 ${fmtDue(t.due)}</span>
+        <span class="st ${statusClass[t.status]}" style="font-size:10.5px">${statusLabel[t.status]||'Open'}</span>
+        <span style="font-size:11px;color:var(--text-light)">${t.created}</span>
+      </div>
+    </div>`).join('');
+}
+function renderDetHistTasks() {
+  const c = $('det-hist-tasks'); if (!c) return;
+  c.innerHTML = detHistTasks.map(t => `
+    <div class="hist-row">
+      <div><div class="hist-icon">✅</div></div>
+      <div>
+        <div class="hist-title">${t.title}</div>
+        <div class="hist-meta"><span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span><span>👤 ${t.assignee}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">${t.id}</span></div>
+        ${t.note?`<div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;padding:3px 8px;background:#fafafa;border-left:3px solid var(--border)">${t.note}</div>`:''}
+      </div>
+      <div class="hist-r"><div class="hist-when">✓ ${t.closed}</div><div class="hist-dur">⏱ ${t.duration}</div><span class="st st-resolved" style="font-size:10px;margin-top:4px;display:inline-block">Resolved</span></div>
+    </div>`).join('');
+}
+function toggleDetTask(i) {
+  const t = detTasks[i];
+  t.status = t.status==='open'?'in-progress':t.status==='in-progress'?'done':'open';
+  renderDetTasks();
+}
+
+// ═══════════════════════════════════════════════════
+// MY TASKS KANBAN (custom HTML)
+// ═══════════════════════════════════════════════════
+const myTasks = {
+  overdue: [
+    {id:"MT-001",type:"document",title:"Complete post-mortem report for CASE-1031",caseNum:"CASE-1031",priority:"High",due:"2026-03-13",status:"open"},
+    {id:"MT-002",type:"review",  title:"Review and close CASE-1034 — confirm fix stable",caseNum:"CASE-1034",priority:"Medium",due:"2026-03-12",status:"open"},
+  ],
+  today: [
+    {id:"MT-003",type:"remediate",  title:"Apply Redis eviction policy fix — iQube prod",caseNum:"CASE-1028",priority:"High",due:"2026-03-15",status:"in-progress"},
+    {id:"MT-004",type:"verify",     title:"Verify CASE-1035 cert renewal on API gateway",caseNum:"CASE-1035",priority:"High",due:"2026-03-15",status:"open"},
+    {id:"MT-005",type:"investigate",title:"Root cause analysis — CASE-1042 VPN concentrator",caseNum:"CASE-1042",priority:"High",due:"2026-03-15",status:"in-progress"},
+  ],
+  upcoming: [
+    {id:"MT-006",type:"action",     title:"Present SLA compliance report to tech leadership",caseNum:"CASE-1036",priority:"Medium",due:"2026-03-17",status:"open"},
+    {id:"MT-007",type:"communicate",title:"Send weekly status update to stakeholders",caseNum:"CASE-1032",priority:"Low",due:"2026-03-18",status:"open"},
+  ]
+};
+const myHistTasks = [
+  {id:"MT-H01",type:"document",   title:"Documented Solace broker recovery steps — CASE-1030",caseNum:"CASE-1030",closed:"13 Mar, 17:30",duration:"1h 20m"},
+  {id:"MT-H02",type:"remediate",  title:"Patched Kafka consumer config — CASE-1034",caseNum:"CASE-1034",closed:"12 Mar, 22:10",duration:"3h 45m"},
+  {id:"MT-H03",type:"review",     title:"Reviewed GKE autoscaler policy — CASE-1032",caseNum:"CASE-1032",closed:"11 Mar, 18:00",duration:"55m"},
+  {id:"MT-H04",type:"verify",     title:"Verified Redis fix in staging — CASE-1028",caseNum:"CASE-1028",closed:"10 Mar, 14:30",duration:"40m"},
+  {id:"MT-H05",type:"communicate",title:"Stakeholder update sent for CASE-1031",caseNum:"CASE-1031",closed:"11 Mar, 10:00",duration:"25m"},
+  {id:"MT-H06",type:"document",   title:"RCA draft completed for database sync failure",caseNum:"CASE-1031",closed:"11 Mar, 16:45",duration:"2h 10m"},
+];
+
+function renderMyTasks() {
+  const cols = [
+    {key:'overdue',  label:'Overdue',   color:'var(--brand)', bg:'var(--brand-light)'},
+    {key:'today',    label:'Due Today', color:'var(--warn)',   bg:'#fff8e6'},
+    {key:'upcoming', label:'Upcoming',  color:'#1a56db',       bg:'#e8f0fe'},
+  ];
+  const board = $('mt-board'); if (!board) return;
+  board.innerHTML = cols.map(col => `
+    <div class="mt-col">
+      <div class="mt-col-hdr">
+        <span style="width:9px;height:9px;border-radius:50%;background:${col.color};display:inline-block"></span>
+        ${col.label}
+        <span class="cpill" style="background:${col.bg};color:${col.color}">${myTasks[col.key].length}</span>
+      </div>
+      ${myTasks[col.key].map(t => `
+        <div class="mt-task-card" onclick="showDetail('${t.caseNum}')">
+          <div class="mt-tc-title">${t.title}</div>
+          <div class="mt-tc-meta">
+            <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+            <span class="mt-tc-case">${t.caseNum}</span>
+            <span style="font-size:10.5px;font-weight:700;color:${t.priority==='High'?'var(--danger)':t.priority==='Medium'?'var(--warn)':'#999'}">${t.priority}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:10.5px;color:${col.key==='overdue'?'var(--brand)':col.key==='today'?'var(--warn)':'#999'}">📅 ${fmtDue(t.due)}</span>
+            <span class="st ${t.status==='in-progress'?'st-progress':'st-new'}" style="font-size:10px">${t.status==='in-progress'?'In Progress':'Open'}</span>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  const timeline = $('my-hist-timeline'); if (!timeline) return;
+  timeline.innerHTML = myHistTasks.map(t => `
+    <div class="ht-entry">
+      <div class="ht-dot"></div>
+      <div class="ht-body">
+        <div class="ht-title">${t.title}</div>
+        <div class="ht-meta"><span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span><span class="mt-tc-case">${t.caseNum}</span></div>
+      </div>
+      <div class="ht-right"><div>✓ ${t.closed}</div><div class="ht-dur">⏱ ${t.duration}</div></div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD (custom HTML)
+// ═══════════════════════════════════════════════════
+function renderDashboard() {
+  // Recent cases
+  const rb = $('dash-recent-body'); if (!rb) return;
+  rb.innerHTML = cases.slice(0,7).map(c=>`
+    <tr onclick="showDetail('${c.num}')">
+      <td><a class="cell-case-num" onclick="event.stopPropagation();showDetail('${c.num}')">${c.num}</a></td>
+      <td><div style="max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px">${c.subject}</div></td>
+      <td><span class="prio ${priClass[c.pri]}">${c.pri}</span></td>
+      <td><span class="st ${stClass[c.state]}">${stLabel[c.state]}</span></td>
+      <td style="font-size:12px">${c.assigned}</td>
+      <td style="font-size:11.5px;color:#999">${c.updated}</td>
+    </tr>`).join('');
+
+  // Category bars
+  const cats = {}; cases.filter(c=>['new','progress','pending'].includes(c.state)).forEach(c=>cats[c.cat]=(cats[c.cat]||0)+1);
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const max = sorted[0]?.[1]||1;
+  const colors = ['#DB0011','#b45300','#1a7a4a','#1a56db','#5b21b6','#767676'];
+  const cb = $('cat-bars'); if (!cb) return;
+  cb.innerHTML = sorted.map(([cat,cnt],i)=>`
+    <div class="bar-row">
+      <div class="bar-lbl">${cat}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(cnt/max*100).toFixed(0)}%;background:${colors[i%colors.length]}"></div></div>
+      <div class="bar-val">${cnt}</div>
+    </div>`).join('');
+
+  // My tasks summary
+  const allOpen = [...myTasks.overdue,...myTasks.today,...myTasks.upcoming];
+  const ms = $('dash-my-tasks-summary'); if (!ms) return;
+  ms.innerHTML = allOpen.slice(0,5).map(t=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid #f5f5f5;cursor:pointer" onclick="showView('my-tasks')">
+      <span class="tp ${tpClass[t.type]}">${tpLabel[t.type]}</span>
+      <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.title}</div>
+        <div style="font-size:10.5px;color:var(--brand);font-family:'IBM Plex Mono',monospace">${t.caseNum}</div>
+      </div>
+      <span style="font-size:10.5px;white-space:nowrap;color:${t.due<'2026-03-15'?'var(--brand)':t.due==='2026-03-15'?'var(--warn)':'#999'}">📅 ${fmtDue(t.due)}</span>
+    </div>`).join('') +
+    `<div style="padding:7px 12px;text-align:center"><a href="#" onclick="showView('my-tasks')" style="font-size:11.5px;color:var(--brand);text-decoration:none;font-weight:600">View all ${allOpen.length} tasks →</a></div>`;
+
+  // Team workload
+  const team=[
+    {init:'RM',name:'Rahul Mehta',   col:'#1a7a4a',open:8,ip:3},
+    {init:'SP',name:'Sanjay Patel',  col:'#a80010',open:6,ip:4},
+    {init:'BK',name:'Bhushan Kadam', col:'#DB0011',open:5,ip:3},
+    {init:'DT',name:'Divya Thomas',  col:'#b45300',open:4,ip:2},
+    {init:'KS',name:'Kiran Singh',   col:'#5b21b6',open:7,ip:5},
+  ];
+  const tw = $('team-workload'); if (!tw) return;
+  tw.innerHTML = team.map(m=>`
+    <div class="wl-row">
+      <div class="wl-av" style="background:${m.col}">${m.init}</div>
+      <div><div class="wl-name">${m.name}</div><div style="font-size:10.5px;color:#999">${m.open} open · ${m.ip} in progress</div></div>
+      <div class="wl-bars">
+        ${Array(m.ip).fill('<div class="wl-dot" style="background:var(--warn)"></div>').join('')}
+        ${Array(Math.min(m.open,5)).fill('<div class="wl-dot" style="background:#dbeafe;border:1px solid #93c5fd"></div>').join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════
+function openTaskModal(){ $('task-modal').classList.add('open'); }
+function closeTaskModal(){ $('task-modal').classList.remove('open'); }
+function addTask(){
+  const title = $('mt-title').value.trim();
+  if (!title) { alert('Please enter a task title.'); return; }
+  detTasks.unshift({
+    id:'TASK-0'+(detTasks.length+4),type:$('mt-type').value,title,
+    desc:$('mt-desc').value,assignee:$('mt-assignee').value||'Unassigned',
+    group:'—',priority:$('mt-priority').value,due:$('mt-due').value,
+    status:'open',created:'Just now'
+  });
+  renderDetTasks();
+  closeTaskModal();
+  ['mt-title','mt-desc','mt-assignee'].forEach(id=>{const el=$(id);if(el)el.value='';});
+}
+function openNewCaseModal(){ $('case-modal').classList.add('open'); }
+function closeCaseModal(){ $('case-modal').classList.remove('open'); }
+function addCase(){
+  const subj = $('nc-subject').value.trim();
+  if (!subj) { alert('Please enter a subject.'); return; }
+  cases.unshift({
+    num:'CASE-'+(1043+cases.length),type:$('nc-type').value,
+    pri:$('nc-priority').value,state:'new',subject:subj,
+    requester:$('nc-req').value||'Unknown',assigned:'Unassigned',
+    cat:$('nc-cat').value,created:'15 Mar 2026',updated:'Just now'
+  });
+  refreshCaseGrid();
+  closeCaseModal();
+  ['nc-subject','nc-req','nc-desc'].forEach(id=>{const el=$(id);if(el)el.value='';});
+}
+window.addEventListener('click', e => {
+  ['task-modal','case-modal'].forEach(id => { const m=$(id); if(m&&e.target===m) m.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function initApp() {
+  initCaseGrid();
+  setTimeout(() => initTaskGrid(), 300);
+  renderMyTasks();
+  renderDashboard();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+</script>
+</body>
+</html>
